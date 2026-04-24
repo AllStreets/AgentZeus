@@ -2,9 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 
+async function getVercelContext(token: string): Promise<string> {
+  if (!token) return "Vercel not connected.";
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/vercel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    if (data.error) return `Vercel error: ${data.error}`;
+    const recent = data.deployments.slice(0, 5);
+    const list = recent.map((d: { name: string; state: string; age: number }) => `${d.name}: ${d.state} (${d.age}m ago)`).join("; ");
+    return `Recent Vercel deployments: ${list}.`;
+  } catch {
+    return "Vercel fetch failed.";
+  }
+}
+
 export async function POST(req: NextRequest) {
-  const { intent, transcript, session_id } = await req.json();
+  const { intent, transcript, session_id, vercel_token } = await req.json();
   const supabase = createServiceClient();
+
+  const vercelContext = await getVercelContext(vercel_token || "");
 
   const response = await openai.chat.completions.create({
     model: "gpt-5.4-mini",
@@ -12,22 +33,16 @@ export async function POST(req: NextRequest) {
     messages: [
       {
         role: "system",
-        content: `You are Ares, the System & DevOps agent. You help users monitor infrastructure, track deployments, analyze errors, and maintain system health.
+        content: `You are Ares, the System & DevOps agent. You monitor infrastructure and deployments.
 
-Note: Monitoring API integrations are currently being configured. For now, help the user plan their infrastructure tasks and discuss system status — but do not claim to have accessed live monitoring data.
+Current system context:
+${vercelContext}
 
 Respond with JSON:
 {
-  "response": "<spoken response to the user>",
-  "actions": [
-    {
-      "type": "check_status" | "list_deployments" | "analyze_errors" | "run_health_check",
-      "data": { ...relevant fields }
-    }
-  ]
-}
-
-Keep responses concise and conversational — they will be spoken aloud.`,
+  "response": "<spoken response — concise, under 3 sentences>",
+  "actions": []
+}`,
       },
       { role: "user", content: transcript },
     ],

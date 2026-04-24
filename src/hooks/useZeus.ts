@@ -23,11 +23,12 @@ export function useZeus(): UseZeusReturn {
 
     try {
       const github_token = typeof window !== "undefined" ? localStorage.getItem("github_token") || undefined : undefined;
+      const vercel_token = typeof window !== "undefined" ? localStorage.getItem("vercel_token") || undefined : undefined;
 
       const res = await fetch("/api/zeus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript, github_token }),
+        body: JSON.stringify({ transcript, github_token, vercel_token }),
       });
 
       const data: ZeusResponse = await res.json();

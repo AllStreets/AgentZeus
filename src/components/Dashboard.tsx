@@ -17,10 +17,12 @@ import AthenaPanel from "./panels/AthenaPanel";
 import ApolloPanel from "./panels/ApolloPanel";
 import AresPanel from "./panels/AresPanel";
 import SettingsPanel from "./SettingsPanel";
+import AmbientToast from "./AmbientToast";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useVoiceOutput } from "@/hooks/useVoiceOutput";
 import { useZeus } from "@/hooks/useZeus";
 import { useAgentEvents } from "@/hooks/useAgentEvents";
+import { useAmbientMonitor } from "@/hooks/useAmbientMonitor";
 import { agents, getAgent } from "@/lib/agents";
 import { AgentEvent, AgentName } from "@/types";
 
@@ -50,6 +52,7 @@ export default function Dashboard() {
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
   const { isSpeaking, speak } = useVoiceOutput();
   const { events } = useAgentEvents(lastResponse?.session_id || null);
+  const { notifications, dismiss } = useAmbientMonitor();
 
   const handleTranscript = useCallback(
     async (text: string) => {
@@ -202,6 +205,9 @@ export default function Dashboard() {
 
       {/* Settings Panel */}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Ambient Notifications */}
+      <AmbientToast notifications={notifications} onDismiss={dismiss} />
     </main>
   );
 }

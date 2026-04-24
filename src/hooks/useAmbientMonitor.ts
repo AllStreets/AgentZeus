@@ -1,0 +1,87 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+
+interface AmbientNotification {
+  id: string;
+  type: "gmail" | "calendar";
+  message: string;
+  timestamp: Date;
+}
+
+export function useAmbientMonitor() {
+  const [notifications, setNotifications] = useState<AmbientNotification[]>([]);
+  const lastUnreadRef = useRef<number | null>(null);
+  const lastEventCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function poll() {
+      if (cancelled) return;
+
+      // Poll Gmail
+      try {
+        const res = await fetch("/api/gmail");
+        const data = await res.json();
+        if (data.connected && typeof data.unreadCount === "number") {
+          const prev = lastUnreadRef.current;
+          if (prev !== null && data.unreadCount > prev) {
+            const diff = data.unreadCount - prev;
+            addNotification("gmail", `${diff} new email${diff > 1 ? "s" : ""} arrived`);
+          }
+          lastUnreadRef.current = data.unreadCount;
+        }
+      } catch {
+        // silent
+      }
+
+      // Poll Calendar for upcoming events (within 10 minutes)
+      try {
+        const res = await fetch("/api/calendar?action=today");
+        const data = await res.json();
+        if (data.connected && data.nextEvent) {
+          const { minutesUntil, title } = data.nextEvent;
+          if (minutesUntil !== null && minutesUntil <= 10 && minutesUntil > 0) {
+            const key = `${title}-${minutesUntil}`;
+            const alreadyNotified = lastEventCountRef.current === minutesUntil;
+            if (!alreadyNotified) {
+              addNotification("calendar", `"${title}" starts in ${minutesUntil} minute${minutesUntil !== 1 ? "s" : ""}`);
+              lastEventCountRef.current = minutesUntil;
+            }
+          }
+        }
+      } catch {
+        // silent
+      }
+    }
+
+    function addNotification(type: AmbientNotification["type"], message: string) {
+      const note: AmbientNotification = {
+        id: crypto.randomUUID(),
+        type,
+        message,
+        timestamp: new Date(),
+      };
+      setNotifications((prev) => [note, ...prev.slice(0, 9)]);
+    }
+
+    // Initial poll after 10s delay, then every 5 minutes
+    const initialTimeout = setTimeout(() => {
+      poll();
+      const interval = setInterval(poll, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }, 10_000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(initialTimeout);
+    };
+  }, []);
+
+  function dismiss(id: string) {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }
+
+  return { notifications, dismiss };
+}

@@ -28,11 +28,14 @@ ${Object.entries(AGENT_DESCRIPTIONS)
 
 If the command is a general greeting or doesn't fit any agent, use "zeus" as the agent.
 
-Also detect navigation commands and return a navigate: intent:
-- "show my tasks" / "open tasks" / "show Artemis" → agent: "artemis", intent: "navigate:artemis"
-- "show notes" / "open Hera" / "my notes" → agent: "hera", intent: "navigate:hera"
-- "open settings" / "go to settings" → agent: "zeus", intent: "navigate:settings"
-- "show [agent name]" / "open [agent name]" → agent: that agent's name, intent: "navigate:[agent]"
+Also detect these special intents:
+- Navigation: "show my tasks" / "open tasks" / "show Artemis" → agent: "artemis", intent: "navigate:artemis"
+- Navigation: "show notes" / "open Hera" / "my notes" → agent: "hera", intent: "navigate:hera"
+- Navigation: "open settings" / "go to settings" → agent: "zeus", intent: "navigate:settings"
+- Navigation: "show [agent name]" / "open [agent name]" → agent: that agent's name, intent: "navigate:[agent]"
+- Daily briefing: "good morning" / "give me my briefing" / "morning briefing" / "daily briefing" → agent: "zeus", intent: "briefing"
+- Quick task add: "add task [title]" / "remind me to [task]" → agent: "artemis", intent: "quick_task:[title]"
+- Quick note: "remember [content]" / "note that [content]" → agent: "hera", intent: "quick_note:[content]"
 
 Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or navigate:target>" }`,
       },
@@ -60,6 +63,25 @@ async function handleAgentRequest(
     event_type: "thinking",
     content: intent,
   });
+
+  // Daily briefing — multi-agent sequence
+  if (intent === "briefing") {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    try {
+      const res = await fetch(`${baseUrl}/api/briefing`);
+      const data = await res.json();
+      const reply = data.briefing;
+      await supabase.from("agent_events").insert({
+        session_id: sessionId,
+        agent_name: "zeus",
+        event_type: "complete",
+        content: reply,
+      });
+      return reply;
+    } catch {
+      return "I had trouble assembling your briefing. Please try again.";
+    }
+  }
 
   // Navigation intents — short acknowledgment, no agent sub-call needed
   if (intent.startsWith("navigate:")) {
@@ -113,7 +135,7 @@ async function handleAgentRequest(
 }
 
 export async function POST(req: NextRequest) {
-  const { transcript, github_token } = await req.json();
+  const { transcript, github_token, vercel_token } = await req.json();
 
   if (!transcript?.trim()) {
     return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
@@ -122,8 +144,10 @@ export async function POST(req: NextRequest) {
   const sessionId = crypto.randomUUID();
 
   const { agent, intent } = await classifyIntent(transcript);
-  const extras = agent === "athena" && github_token ? { github_token } : undefined;
-  const response = await handleAgentRequest(agent, intent, transcript, sessionId, extras);
+  const extras: Record<string, string | undefined> = {};
+  if (agent === "athena" && github_token) extras.github_token = github_token;
+  if (agent === "ares" && vercel_token) extras.vercel_token = vercel_token;
+  const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
 
   const supabase = createServiceClient();
   await supabase.from("conversations").insert({
