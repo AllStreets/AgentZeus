@@ -10,6 +10,7 @@ interface UseVoiceInputReturn {
   stopListening: () => void;
   toggleListening: () => void;
   isSupported: boolean;
+  recognitionError: string | null;
 }
 
 export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVoiceInputReturn {
@@ -17,6 +18,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVo
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
+  const [recognitionError, setRecognitionError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVo
       recognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
         setIsListening(false);
+        setRecognitionError(event.error);
       };
 
       recognitionRef.current = recognition;
@@ -65,6 +68,7 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVo
     if (recognitionRef.current && !isListening) {
       setTranscript("");
       setInterimTranscript("");
+      setRecognitionError(null);
       recognitionRef.current.start();
       setIsListening(true);
     }
@@ -85,5 +89,5 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVo
     }
   }, [isListening, startListening, stopListening]);
 
-  return { isListening, transcript, interimTranscript, startListening, stopListening, toggleListening, isSupported };
+  return { isListening, transcript, interimTranscript, startListening, stopListening, toggleListening, isSupported, recognitionError };
 }

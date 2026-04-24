@@ -32,6 +32,15 @@ export function useZeus(): UseZeusReturn {
         body: JSON.stringify({ transcript, github_token, vercel_token, slack_webhook }),
       });
 
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try { const e = await res.json(); detail = e.error || detail; } catch { /* ignore */ }
+        const errResponse: ZeusResponse = { agent: "zeus", intent: "error", response: `Request failed: ${detail}`, session_id: "" };
+        setActiveAgent("zeus");
+        setLastResponse(errResponse);
+        return errResponse;
+      }
+
       const data: ZeusResponse = await res.json();
       setActiveAgent(data.agent);
       setLastResponse(data);

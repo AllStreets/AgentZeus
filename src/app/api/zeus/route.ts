@@ -138,32 +138,37 @@ async function handleAgentRequest(
 }
 
 export async function POST(req: NextRequest) {
-  const { transcript, github_token, vercel_token, slack_webhook } = await req.json();
+  try {
+    const { transcript, github_token, vercel_token, slack_webhook } = await req.json();
 
-  if (!transcript?.trim()) {
-    return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
+    if (!transcript?.trim()) {
+      return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
+    }
+
+    const sessionId = crypto.randomUUID();
+
+    const { agent, intent } = await classifyIntent(transcript);
+    const extras: Record<string, string | undefined> = {};
+    if (agent === "athena" && github_token) extras.github_token = github_token;
+    if (agent === "ares" && vercel_token) extras.vercel_token = vercel_token;
+    if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
+    const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
+
+    const supabase = createServiceClient();
+    await supabase.from("conversations").insert({
+      transcript,
+      agent_name: agent,
+      response,
+    });
+
+    extractMemoryFacts(transcript, response, agent).catch(() => {});
+
+    return NextResponse.json({ agent, intent, response, session_id: sessionId });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Zeus POST error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const sessionId = crypto.randomUUID();
-
-  const { agent, intent } = await classifyIntent(transcript);
-  const extras: Record<string, string | undefined> = {};
-  if (agent === "athena" && github_token) extras.github_token = github_token;
-  if (agent === "ares" && vercel_token) extras.vercel_token = vercel_token;
-  if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
-  const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
-
-  const supabase = createServiceClient();
-  await supabase.from("conversations").insert({
-    transcript,
-    agent_name: agent,
-    response,
-  });
-
-  // Asynchronously extract memory facts — fire and forget, doesn't block response
-  extractMemoryFacts(transcript, response, agent).catch(() => {});
-
-  return NextResponse.json({ agent, intent, response, session_id: sessionId });
 }
 
 async function extractMemoryFacts(transcript: string, response: string, agent: string): Promise<void> {
