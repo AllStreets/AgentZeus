@@ -7,7 +7,7 @@ export const agents: AgentInfo[] = [
     domain: "Orchestrator",
     description: "Receives commands and delegates to the right agent",
     color: "#f59e0b",
-    icon: "Z",
+    icon: "zap",
   },
   {
     name: "hermes",
@@ -15,7 +15,7 @@ export const agents: AgentInfo[] = [
     domain: "Communications",
     description: "Email, Slack, and Discord management",
     color: "#14b8a6",
-    icon: "H",
+    icon: "send",
   },
   {
     name: "athena",
@@ -23,7 +23,7 @@ export const agents: AgentInfo[] = [
     domain: "Code & Dev",
     description: "GitHub, PRs, code generation, deployments",
     color: "#8b5cf6",
-    icon: "A",
+    icon: "code",
   },
   {
     name: "apollo",
@@ -31,7 +31,7 @@ export const agents: AgentInfo[] = [
     domain: "Calendar",
     description: "Scheduling, events, and daily briefings",
     color: "#f97316",
-    icon: "Ap",
+    icon: "calendar",
   },
   {
     name: "artemis",
@@ -39,7 +39,7 @@ export const agents: AgentInfo[] = [
     domain: "Tasks & Productivity",
     description: "Todos, habits, goals, and focus sessions",
     color: "#10b981",
-    icon: "Ar",
+    icon: "target",
   },
   {
     name: "ares",
@@ -47,7 +47,7 @@ export const agents: AgentInfo[] = [
     domain: "System & DevOps",
     description: "Monitoring, deployments, and error analysis",
     color: "#ef4444",
-    icon: "As",
+    icon: "shield",
   },
   {
     name: "hera",
@@ -55,7 +55,7 @@ export const agents: AgentInfo[] = [
     domain: "Memory & Knowledge",
     description: "Notes, bookmarks, and semantic search",
     color: "#f43f5e",
-    icon: "Hr",
+    icon: "brain",
   },
 ];
 

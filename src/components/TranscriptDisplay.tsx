@@ -1,12 +1,21 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { getAgent } from "@/lib/agents";
+import AgentIcon from "./AgentIcon";
+
+interface ConversationEntry {
+  transcript: string;
+  response: string;
+  agent: string;
+}
 
 interface TranscriptDisplayProps {
   transcript: string;
   interimTranscript: string;
   response: string | null;
   activeAgent: string | null;
+  history: ConversationEntry[];
 }
 
 export default function TranscriptDisplay({
@@ -14,48 +23,76 @@ export default function TranscriptDisplay({
   interimTranscript,
   response,
   activeAgent,
+  history,
 }: TranscriptDisplayProps) {
-  const hasContent = transcript || interimTranscript || response;
-
-  if (!hasContent) return null;
+  const agent = activeAgent ? getAgent(activeAgent) : null;
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        className="glass rounded-xl px-6 py-4 max-w-2xl w-full mx-auto"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.3 }}
-      >
-        {(transcript || interimTranscript) && (
-          <div className="mb-2">
-            <span className="text-xs font-mono text-accent uppercase tracking-wider">You</span>
-            <p className="text-slate-200 mt-1">
-              {transcript}
-              {interimTranscript && (
-                <span className="text-slate-400 italic">{interimTranscript}</span>
-              )}
-            </p>
+    <div className="flex flex-col gap-3 w-full overflow-y-auto max-h-[calc(100vh-420px)] pr-1">
+      {/* History */}
+      {history.map((entry, i) => {
+        const histAgent = getAgent(entry.agent);
+        return (
+          <div key={i} className="space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-[10px] font-mono text-accent">YOU</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">{entry.transcript}</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                style={{ backgroundColor: `${histAgent?.color || "#3b82f6"}15`, color: histAgent?.color || "#3b82f6" }}
+              >
+                {histAgent ? <AgentIcon icon={histAgent.icon} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
+              </div>
+              <p className="text-sm text-slate-400 leading-relaxed">{entry.response}</p>
+            </div>
           </div>
+        );
+      })}
+
+      {/* Current interaction */}
+      <AnimatePresence mode="wait">
+        {(transcript || interimTranscript) && (
+          <motion.div
+            className="flex items-start gap-3"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-[10px] font-mono text-accent">YOU</span>
+            </div>
+            <p className="text-sm text-slate-200 leading-relaxed">
+              {transcript}
+              {interimTranscript && <span className="text-slate-500">{interimTranscript}</span>}
+            </p>
+          </motion.div>
         )}
 
         {response && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            className="flex items-start gap-3"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            <span
-              className="text-xs font-mono uppercase tracking-wider"
-              style={{ color: activeAgent ? undefined : "#3b82f6" }}
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+              style={{ backgroundColor: `${agent?.color || "#3b82f6"}15`, color: agent?.color || "#3b82f6" }}
             >
-              {activeAgent || "Zeus"}
-            </span>
-            <p className="text-slate-200 mt-1">{response}</p>
+              {agent ? <AgentIcon icon={agent.icon} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
+            </div>
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: agent?.color || "#3b82f6" }}>
+                {agent?.displayName || "Zeus"}
+              </span>
+              <p className="text-sm text-slate-300 leading-relaxed mt-0.5">{response}</p>
+            </div>
           </motion.div>
         )}
-      </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </div>
   );
 }

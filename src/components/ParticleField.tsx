@@ -5,6 +5,7 @@ import { useRef, useEffect } from "react";
 interface ParticleFieldProps {
   isActive: boolean;
   color?: string;
+  size?: number;
 }
 
 interface Particle {
@@ -12,88 +13,94 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  size: number;
+  radius: number;
   opacity: number;
   life: number;
 }
 
-export default function ParticleField({ isActive, color = "#3b82f6" }: ParticleFieldProps) {
+export default function ParticleField({ isActive, color = "#3b82f6", size = 128 }: ParticleFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
-  const animationRef = useRef<number>(0);
+  const frameRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
     const ctx = canvas.getContext("2d")!;
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * 2;
-      canvas.height = canvas.offsetHeight * 2;
-      ctx.scale(2, 2);
-    };
-    resize();
+    ctx.scale(dpr, dpr);
 
-    const w = () => canvas.offsetWidth;
-    const h = () => canvas.offsetHeight;
-    const cx = () => w() / 2;
-    const cy = () => h() / 2;
+    const center = size / 2;
 
-    function spawnParticle(): Particle {
+    function spawn(): Particle {
       const angle = Math.random() * Math.PI * 2;
-      const distance = 30 + Math.random() * 20;
+      const dist = 20 + Math.random() * 15;
       return {
-        x: cx() + Math.cos(angle) * distance,
-        y: cy() + Math.sin(angle) * distance,
-        vx: Math.cos(angle) * (0.3 + Math.random() * 0.7),
-        vy: Math.sin(angle) * (0.3 + Math.random() * 0.7),
-        size: 1 + Math.random() * 2,
-        opacity: 0.6 + Math.random() * 0.4,
+        x: center + Math.cos(angle) * dist,
+        y: center + Math.sin(angle) * dist,
+        vx: Math.cos(angle) * (0.2 + Math.random() * 0.5),
+        vy: Math.sin(angle) * (0.2 + Math.random() * 0.5),
+        radius: 0.5 + Math.random() * 1.5,
+        opacity: 0.8,
         life: 1,
       };
     }
 
-    function animate() {
-      ctx.clearRect(0, 0, w(), h());
+    function draw() {
+      ctx.clearRect(0, 0, size, size);
+      const particles = particlesRef.current;
 
-      if (isActive && particlesRef.current.length < 60) {
-        particlesRef.current.push(spawnParticle());
-        particlesRef.current.push(spawnParticle());
+      if (isActive && particles.length < 50) {
+        particles.push(spawn(), spawn());
       }
 
-      particlesRef.current = particlesRef.current.filter((p) => p.life > 0);
+      // Draw connecting lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 40) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = (1 - dist / 40) * 0.15 * Math.min(particles[i].life, particles[j].life);
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
 
-      for (const p of particlesRef.current) {
+      // Draw particles
+      for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.008;
-        p.opacity = p.life * 0.6;
-
+        p.life -= 0.006;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = color;
-        ctx.globalAlpha = p.opacity;
+        ctx.globalAlpha = p.life * 0.5;
         ctx.fill();
       }
 
       ctx.globalAlpha = 1;
-      animationRef.current = requestAnimationFrame(animate);
+      particlesRef.current = particles.filter((p) => p.life > 0);
+      frameRef.current = requestAnimationFrame(draw);
     }
 
-    animate();
-
-    window.addEventListener("resize", resize);
-    return () => {
-      cancelAnimationFrame(animationRef.current);
-      window.removeEventListener("resize", resize);
-    };
-  }, [isActive, color]);
+    draw();
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [isActive, color, size]);
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none"
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: size, height: size }}
     />
   );
 }
