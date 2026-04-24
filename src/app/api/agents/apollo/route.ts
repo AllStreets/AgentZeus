@@ -8,6 +8,23 @@ interface CalEvent { title: string; startFormatted: string; endFormatted: string
 interface FreeBusyPeriod { start: string; end: string }
 interface RunParams { intent: string; transcript: string; session_id: string }
 
+async function createCalendarEvent(token: string, title: string, start: string, end: string, description?: string): Promise<string | null> {
+  try {
+    const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        summary: title,
+        description: description || "",
+        start: { dateTime: start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        end: { dateTime: end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      }),
+    });
+    const data = await res.json();
+    return data.id || null;
+  } catch { return null; }
+}
+
 async function getCalendarContext(): Promise<{ summary: string }> {
   const token = await getGoogleToken("calendar");
   if (!token) return { summary: "Google Calendar is not connected." };
@@ -82,7 +99,7 @@ export async function runApollo({ intent, transcript, session_id }: RunParams): 
     messages: [
       {
         role: "system",
-        content: `You are Apollo, the Calendar & Scheduling agent.
+        content: `You are Apollo, the Calendar & Scheduling agent. Today is ${new Date().toISOString()}.
 
 Calendar context:
 ${calContext}
@@ -91,11 +108,17 @@ ${slotContext ? `Free slot analysis:\n${slotContext}` : ""}
 
 If the calendar isn't connected, tell the user to connect it via the Apollo panel.
 If they asked about free slots, present the options naturally.
+If the user wants to add/create/schedule an event, include a create_event action with ISO 8601 start and end times. Infer reasonable defaults (1 hour duration if not specified).
 
 Respond with JSON:
 {
   "response": "<spoken response — concise, under 3 sentences>",
-  "actions": []
+  "actions": [
+    {
+      "type": "create_event",
+      "data": { "title": "...", "start": "2025-01-01T10:00:00", "end": "2025-01-01T11:00:00", "description": "..." }
+    }
+  ]
 }`,
       },
       { role: "user", content: transcript },
@@ -103,6 +126,17 @@ Respond with JSON:
   });
 
   const content = JSON.parse(response.choices[0].message.content!);
+
+  for (const action of content.actions || []) {
+    if (action.type === "create_event" && action.data?.title && action.data?.start) {
+      const token = await getGoogleToken("calendar");
+      if (token) {
+        const end = action.data.end || new Date(new Date(action.data.start).getTime() + 3600000).toISOString();
+        const id = await createCalendarEvent(token, action.data.title, action.data.start, end, action.data.description);
+        if (id) content.response += " Event added to your calendar.";
+      }
+    }
+  }
 
   Promise.resolve(supabase.from("agent_events").insert({
     session_id, agent_name: "apollo", event_type: "complete", content: content.response,
