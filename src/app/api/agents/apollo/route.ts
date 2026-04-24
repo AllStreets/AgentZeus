@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { getGoogleToken } from "@/lib/googleAuth";
+import { getBaseUrl } from "@/lib/url";
 
 interface CalEvent {
   title: string;
@@ -22,7 +23,7 @@ async function getCalendarContext(): Promise<{ summary: string; events: CalEvent
   if (!token) return { summary: "Google Calendar is not connected.", events: [] };
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const res = await fetch(`${baseUrl}/api/calendar?action=today`, { cache: "no-store" });
     const data = await res.json();
     if (!data.connected) return { summary: "Google Calendar is not connected.", events: [] };

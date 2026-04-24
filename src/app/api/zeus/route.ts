@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { getBaseUrl } from "@/lib/url";
 import { AgentName } from "@/types";
 
 export const maxDuration = 30;
@@ -68,7 +69,7 @@ async function handleAgentRequest(
 
   // Daily briefing — multi-agent sequence
   if (intent === "briefing") {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     try {
       const res = await fetch(`${baseUrl}/api/briefing`);
       const data = await res.json();
@@ -125,7 +126,7 @@ async function handleAgentRequest(
   }
 
   // Delegate to agent-specific API route
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   const agentResponse = await fetch(`${baseUrl}/api/agents/${agent}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

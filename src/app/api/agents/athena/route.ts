@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { getBaseUrl } from "@/lib/url";
 
 async function fetchGitHubSummary(token: string): Promise<string> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getBaseUrl();
   const res = await fetch(`${baseUrl}/api/github`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { getGoogleToken } from "@/lib/googleAuth";
 import { createServiceClient } from "@/lib/supabase";
+import { getBaseUrl } from "@/lib/url";
 
 export async function GET() {
   const supabase = createServiceClient();
@@ -19,7 +20,7 @@ export async function GET() {
   const gmailToken = await getGoogleToken("gmail");
   if (gmailToken) {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/gmail`);
       const data = await res.json();
       if (data.connected) {
@@ -36,7 +37,7 @@ export async function GET() {
   const calToken = await getGoogleToken("calendar");
   if (calToken) {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const baseUrl = getBaseUrl();
       const res = await fetch(`${baseUrl}/api/calendar?action=today`);
       const data = await res.json();
       if (data.connected && data.events?.length) {

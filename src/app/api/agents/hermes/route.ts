@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { getGoogleToken } from "@/lib/googleAuth";
+import { getBaseUrl } from "@/lib/url";
 
 interface EmailMsg {
   subject: string;
@@ -14,7 +15,7 @@ async function getGmailContext(): Promise<{ summary: string; messages: EmailMsg[
   if (!token) return { summary: "Gmail is not connected.", messages: [] };
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const res = await fetch(`${baseUrl}/api/gmail`, { cache: "no-store" });
     const data = await res.json();
     if (!data.connected) return { summary: "Gmail is not connected.", messages: [] };
@@ -109,7 +110,7 @@ Respond with JSON:
     }
 
     if (action.type === "send_slack" && action.data?.message && slack_webhook) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const baseUrl = getBaseUrl();
       await fetch(`${baseUrl}/api/slack`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
