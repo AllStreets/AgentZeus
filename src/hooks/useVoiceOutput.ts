@@ -11,31 +11,28 @@ interface UseVoiceOutputReturn {
 
 export function useVoiceOutput(): UseVoiceOutputReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const mediaSourceRef = useRef<MediaSource | null>(null);
-  const unlockedRef = useRef(false);
+  const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Must be called during a user gesture (e.g. orb tap) to unlock audio on iOS/Android
+  // Call this synchronously inside a user gesture (orb tap) to satisfy mobile autoplay policy.
+  // AudioContext and HTMLAudioElement share the same permission on Chrome/Safari.
   const unlockAudio = useCallback(() => {
-    if (unlockedRef.current) return;
-    // Play a silent buffer — this registers audio permission with the browser
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-    ctx.close();
-    unlockedRef.current = true;
+    if (audioCtxRef.current) return;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    // Play a 1-sample silent buffer to activate the context
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    audioCtxRef.current = ctx;
   }, []);
 
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (mediaSourceRef.current && mediaSourceRef.current.readyState === "open") {
-      try { mediaSourceRef.current.endOfStream(); } catch { /* ignore */ }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch { /* already stopped */ }
+      sourceNodeRef.current = null;
     }
     setIsSpeaking(false);
   }, []);
@@ -57,64 +54,24 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
 
       if (!response.ok || !response.body) throw new Error("TTS failed");
 
-      // Use MediaSource for streaming playback — starts playing immediately
-      const canStream = typeof MediaSource !== "undefined" && MediaSource.isTypeSupported("audio/mpeg");
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
 
-      if (canStream) {
-        const mediaSource = new MediaSource();
-        mediaSourceRef.current = mediaSource;
-        const url = URL.createObjectURL(mediaSource);
-        const audio = new Audio(url);
-        audioRef.current = audio;
+      // Reuse the unlocked AudioContext — decodeAudioData + BufferSource works on all mobile browsers
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = audioCtxRef.current || new AudioCtx();
+      audioCtxRef.current = ctx;
 
-        audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-        audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      // Resume context if suspended (happens after a period of inactivity on mobile)
+      if (ctx.state === "suspended") await ctx.resume();
 
-        await new Promise<void>((resolve, reject) => {
-          mediaSource.addEventListener("sourceopen", async () => {
-            try {
-              const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-              const reader = response.body!.getReader();
-              let started = false;
-
-              const pump = async () => {
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) {
-                    // Wait for any pending updates before ending stream
-                    if (sourceBuffer.updating) {
-                      await new Promise((r) => sourceBuffer.addEventListener("updateend", r, { once: true }));
-                    }
-                    if (mediaSource.readyState === "open") mediaSource.endOfStream();
-                    break;
-                  }
-                  if (sourceBuffer.updating) {
-                    await new Promise((r) => sourceBuffer.addEventListener("updateend", r, { once: true }));
-                  }
-                  sourceBuffer.appendBuffer(value);
-                  if (!started) {
-                    started = true;
-                    audio.play().catch(() => {});
-                    resolve();
-                  }
-                }
-              };
-              pump().catch(reject);
-            } catch (e) {
-              reject(e);
-            }
-          });
-        });
-      } else {
-        // Fallback: buffer full response then play
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-        audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-        await audio.play();
-      }
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.onended = () => setIsSpeaking(false);
+      source.start(0);
+      sourceNodeRef.current = source;
     } catch (error) {
       console.error("TTS error:", error);
       setIsSpeaking(false);
