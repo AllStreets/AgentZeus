@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Settings, Zap } from "lucide-react";
+import { Settings, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import VoiceOrb from "./VoiceOrb";
 import TranscriptDisplay from "./TranscriptDisplay";
 import AgentCard from "./AgentCard";
@@ -48,6 +48,8 @@ export default function Dashboard() {
   const [selectedAgent, setSelectedAgent] = useState<AgentName | null>(null);
   const [openPanel, setOpenPanel] = useState<AgentName | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
 
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
   const { isSpeaking, speak } = useVoiceOutput();
@@ -126,44 +128,54 @@ export default function Dashboard() {
     <main className="h-screen grid-bg scan-line relative overflow-hidden">
       <div className="flex h-full">
         {/* Left Sidebar */}
-        <motion.div
-          className="w-56 border-r border-white/[0.03] flex flex-col"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="px-4 py-5 flex items-center gap-2.5 border-b border-white/[0.03]">
-            <div className="w-7 h-7 rounded-md bg-zeus/10 flex items-center justify-center">
-              <Zap size={14} className="text-zeus" />
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-white tracking-tight">
-                Agent<span className="text-zeus">Zeus</span>
-              </h1>
-              <p className="text-[9px] font-mono text-slate-600 uppercase tracking-wider">
-                {isSupported ? "Voice Active" : "Voice Unavailable"}
-              </p>
-            </div>
-          </div>
+        <div className="relative flex-shrink-0 flex">
+          <motion.div
+            className="border-r border-white/[0.03] flex flex-col overflow-hidden"
+            initial={{ width: 224, opacity: 0, x: -20 }}
+            animate={{ width: leftOpen ? 224 : 0, opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="w-56 flex flex-col h-full">
+              <div className="px-4 py-5 flex items-center gap-2.5 border-b border-white/[0.03]">
+                <div className="w-7 h-7 rounded-md bg-zeus/10 flex items-center justify-center">
+                  <Zap size={14} className="text-zeus" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-white tracking-tight">
+                    Agent<span className="text-zeus">Zeus</span>
+                  </h1>
+                  <p className="text-[9px] font-mono text-slate-600 uppercase tracking-wider">
+                    {isSupported ? "Voice Active" : "Voice Unavailable"}
+                  </p>
+                </div>
+              </div>
 
-          <div className="flex-1 overflow-y-auto py-2">
-            <AgentSidebar
-              activeAgent={currentActiveAgent}
-              agentMessages={agentMessages}
-              onSelectAgent={(name) => setOpenPanel(name)}
-            />
-          </div>
+              <div className="flex-1 overflow-y-auto py-2">
+                <AgentSidebar
+                  activeAgent={currentActiveAgent}
+                  agentMessages={agentMessages}
+                  onSelectAgent={(name) => setOpenPanel(name)}
+                />
+              </div>
 
-          <div className="px-4 py-3 border-t border-white/[0.03]">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              <Settings size={14} />
-              <span className="text-[11px] font-mono">Settings</span>
-            </button>
-          </div>
-        </motion.div>
+              <div className="px-4 py-3 border-t border-white/[0.03]">
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className="flex items-center gap-2 text-slate-600 hover:text-slate-400 transition-colors"
+                >
+                  <Settings size={14} />
+                  <span className="text-[11px] font-mono">Settings</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+          <button
+            onClick={() => setLeftOpen((o) => !o)}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all"
+          >
+            {leftOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+          </button>
+        </div>
 
         {/* Center */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -204,9 +216,24 @@ export default function Dashboard() {
         </div>
 
         {/* Right Sidebar */}
-        <motion.div className="w-72 border-l border-white/[0.03] p-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-          <ActivityFeed events={allEvents} history={conversationHistory} onReplay={handleReplay} />
-        </motion.div>
+        <div className="relative flex-shrink-0 flex">
+          <button
+            onClick={() => setRightOpen((o) => !o)}
+            className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all"
+          >
+            {rightOpen ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
+          <motion.div
+            className="border-l border-white/[0.03] overflow-hidden"
+            initial={{ width: 288, opacity: 0, x: 20 }}
+            animate={{ width: rightOpen ? 288 : 0, opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="w-72 p-4">
+              <ActivityFeed events={allEvents} history={conversationHistory} onReplay={handleReplay} />
+            </div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Agent Detail Panel */}

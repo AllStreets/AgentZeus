@@ -3,6 +3,8 @@ import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { AgentName } from "@/types";
 
+export const maxDuration = 30;
+
 const AGENT_DESCRIPTIONS: Record<Exclude<AgentName, "zeus">, string> = {
   hermes: "Communications — email, Slack, Discord messaging",
   athena: "Code & Dev — GitHub, PRs, code generation, deployments",
@@ -14,7 +16,7 @@ const AGENT_DESCRIPTIONS: Record<Exclude<AgentName, "zeus">, string> = {
 
 async function classifyIntent(transcript: string): Promise<{ agent: AgentName; intent: string }> {
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {
@@ -99,7 +101,7 @@ async function handleAgentRequest(
 
   if (agent === "zeus") {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.4-mini",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

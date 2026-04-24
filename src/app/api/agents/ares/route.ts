@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const vercelContext = await getVercelContext(vercel_token || "");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {
