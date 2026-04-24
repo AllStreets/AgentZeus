@@ -2,20 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 
+interface RunParams { intent: string; transcript: string; session_id: string }
+
 async function getEmbedding(text: string): Promise<number[]> {
-  const response = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text,
-  });
+  const response = await openai.embeddings.create({ model: "text-embedding-3-small", input: text });
   return response.data[0].embedding;
 }
 
-export async function POST(req: NextRequest) {
-  const { intent, transcript, session_id } = await req.json();
+export async function runHera({ intent, transcript, session_id }: RunParams): Promise<string> {
   const supabase = createServiceClient();
 
   let relevantNotes: Array<{ id: string; content: string; tags: string[]; similarity: number }> = [];
-
   try {
     const queryEmbedding = await getEmbedding(transcript);
     const { data } = await supabase.rpc("match_notes", {
@@ -71,12 +68,15 @@ When saving, extract the key information to store. When searching, summarize wha
     }
   }
 
-  await supabase.from("agent_events").insert({
-    session_id: session_id,
-    agent_name: "hera",
-    event_type: "complete",
-    content: content.response,
-  });
+  Promise.resolve(supabase.from("agent_events").insert({
+    session_id, agent_name: "hera", event_type: "complete", content: content.response,
+  })).catch(() => {});
 
-  return NextResponse.json({ response: content.response });
+  return content.response;
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const response = await runHera(body);
+  return NextResponse.json({ response });
 }

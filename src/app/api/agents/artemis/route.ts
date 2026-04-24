@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 
-export async function POST(req: NextRequest) {
-  const { intent, transcript, session_id } = await req.json();
+interface RunParams { intent: string; transcript: string; session_id: string }
+
+export async function runArtemis({ intent, transcript, session_id }: RunParams): Promise<string> {
   const supabase = createServiceClient();
 
   const { data: tasks } = await supabase
@@ -73,12 +74,15 @@ Keep responses concise — spoken aloud. If listing tasks, summarize naturally.`
     }
   }
 
-  await supabase.from("agent_events").insert({
-    session_id,
-    agent_name: "artemis",
-    event_type: "complete",
-    content: content.response,
-  });
+  Promise.resolve(supabase.from("agent_events").insert({
+    session_id, agent_name: "artemis", event_type: "complete", content: content.response,
+  })).catch(() => {});
 
-  return NextResponse.json({ response: content.response });
+  return content.response;
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const response = await runArtemis(body);
+  return NextResponse.json({ response });
 }

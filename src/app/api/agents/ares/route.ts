@@ -3,29 +3,25 @@ import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { getBaseUrl } from "@/lib/url";
 
+interface RunParams { intent: string; transcript: string; session_id: string; vercel_token?: string }
+
 async function getVercelContext(token: string): Promise<string> {
   if (!token) return "Vercel not connected.";
   try {
-    const baseUrl = getBaseUrl();
-    const res = await fetch(`${baseUrl}/api/vercel`, {
+    const res = await fetch(`${getBaseUrl()}/api/vercel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
     });
     const data = await res.json();
     if (data.error) return `Vercel error: ${data.error}`;
-    const recent = data.deployments.slice(0, 5);
-    const list = recent.map((d: { name: string; state: string; age: number }) => `${d.name}: ${d.state} (${d.age}m ago)`).join("; ");
+    const list = data.deployments.slice(0, 5).map((d: { name: string; state: string; age: number }) => `${d.name}: ${d.state} (${d.age}m ago)`).join("; ");
     return `Recent Vercel deployments: ${list}.`;
-  } catch {
-    return "Vercel fetch failed.";
-  }
+  } catch { return "Vercel fetch failed."; }
 }
 
-export async function POST(req: NextRequest) {
-  const { intent, transcript, session_id, vercel_token } = await req.json();
+export async function runAres({ intent, transcript, session_id, vercel_token }: RunParams): Promise<string> {
   const supabase = createServiceClient();
-
   const vercelContext = await getVercelContext(vercel_token || "");
 
   const response = await openai.chat.completions.create({
@@ -51,12 +47,15 @@ Respond with JSON:
 
   const content = JSON.parse(response.choices[0].message.content!);
 
-  await supabase.from("agent_events").insert({
-    session_id,
-    agent_name: "ares",
-    event_type: "complete",
-    content: content.response,
-  });
+  Promise.resolve(supabase.from("agent_events").insert({
+    session_id, agent_name: "ares", event_type: "complete", content: content.response,
+  })).catch(() => {});
 
-  return NextResponse.json({ response: content.response });
+  return content.response;
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const response = await runAres(body);
+  return NextResponse.json({ response });
 }

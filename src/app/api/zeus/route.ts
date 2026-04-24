@@ -3,6 +3,12 @@ import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { getBaseUrl } from "@/lib/url";
 import { AgentName } from "@/types";
+import { runArtemis } from "@/app/api/agents/artemis/route";
+import { runHera } from "@/app/api/agents/hera/route";
+import { runHermes } from "@/app/api/agents/hermes/route";
+import { runAthena } from "@/app/api/agents/athena/route";
+import { runApollo } from "@/app/api/agents/apollo/route";
+import { runAres } from "@/app/api/agents/ares/route";
 
 export const maxDuration = 30;
 
@@ -106,14 +112,17 @@ async function handleAgentRequest(
     return reply;
   }
 
-  const agentResponse = await fetch(`${getBaseUrl()}/api/agents/${agent}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ intent, transcript, session_id: sessionId, ...extras }),
-  });
-
-  const data = await agentResponse.json();
-  return data.response ?? "No response from agent.";
+  // Call agent logic directly — no internal HTTP hop
+  const params = { intent, transcript, session_id: sessionId, ...extras };
+  switch (agent) {
+    case "artemis": return runArtemis(params);
+    case "hera":    return runHera(params);
+    case "hermes":  return runHermes(params);
+    case "athena":  return runAthena(params);
+    case "apollo":  return runApollo(params);
+    case "ares":    return runAres(params);
+    default:        return "Agent not found.";
+  }
 }
 
 export async function GET() {
