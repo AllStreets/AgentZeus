@@ -48,7 +48,8 @@ async function handleAgentRequest(
   agent: AgentName,
   intent: string,
   transcript: string,
-  sessionId: string
+  sessionId: string,
+  extras?: Record<string, string | undefined>
 ): Promise<string> {
   const supabase = createServiceClient();
 
@@ -104,7 +105,7 @@ async function handleAgentRequest(
   const agentResponse = await fetch(`${baseUrl}/api/agents/${agent}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ intent, transcript, session_id: sessionId }),
+    body: JSON.stringify({ intent, transcript, session_id: sessionId, ...extras }),
   });
 
   const data = await agentResponse.json();
@@ -112,7 +113,7 @@ async function handleAgentRequest(
 }
 
 export async function POST(req: NextRequest) {
-  const { transcript } = await req.json();
+  const { transcript, github_token } = await req.json();
 
   if (!transcript?.trim()) {
     return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
@@ -121,7 +122,8 @@ export async function POST(req: NextRequest) {
   const sessionId = crypto.randomUUID();
 
   const { agent, intent } = await classifyIntent(transcript);
-  const response = await handleAgentRequest(agent, intent, transcript, sessionId);
+  const extras = agent === "athena" && github_token ? { github_token } : undefined;
+  const response = await handleAgentRequest(agent, intent, transcript, sessionId, extras);
 
   const supabase = createServiceClient();
   await supabase.from("conversations").insert({

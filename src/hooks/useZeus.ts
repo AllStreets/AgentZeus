@@ -22,10 +22,12 @@ export function useZeus(): UseZeusReturn {
     setActiveAgent("zeus");
 
     try {
+      const github_token = typeof window !== "undefined" ? localStorage.getItem("github_token") || undefined : undefined;
+
       const res = await fetch("/api/zeus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript }),
+        body: JSON.stringify({ transcript, github_token }),
       });
 
       const data: ZeusResponse = await res.json();
