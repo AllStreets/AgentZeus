@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 export async function POST(req: NextRequest) {
   const { url } = await req.json();
-  if (!url) return NextResponse.json({ error: "No URL provided" }, { status: 400 });
+  if (!url) return NextResponse.json({ error: "No URL provided" }, { status: 400, headers: CORS });
 
   let pageText = "";
   let pageTitle = "";
@@ -29,7 +39,7 @@ export async function POST(req: NextRequest) {
       .trim()
       .slice(0, 6000);
   } catch {
-    return NextResponse.json({ error: "Failed to fetch URL" }, { status: 400 });
+    return NextResponse.json({ error: "Failed to fetch URL" }, { status: 400, headers: CORS });
   }
 
   const completion = await openai.chat.completions.create({
@@ -54,5 +64,5 @@ export async function POST(req: NextRequest) {
     .select("id")
     .single();
 
-  return NextResponse.json({ success: true, id: data?.id, summary, title: pageTitle });
+  return NextResponse.json({ success: true, id: data?.id, summary, title: pageTitle }, { headers: CORS });
 }
