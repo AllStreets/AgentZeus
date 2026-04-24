@@ -82,7 +82,6 @@ export default function Dashboard() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">⚡</span>
               <h1 className="text-xl font-bold text-white tracking-tight">
                 Agent<span className="text-zeus">Zeus</span>
               </h1>
