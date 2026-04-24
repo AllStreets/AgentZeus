@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
 
     // Fire-and-forget — don't await these, they must not delay the response
     const supabase = createServiceClient();
-    supabase.from("conversations").insert({ transcript, agent_name: agent, response }).catch(() => {});
+    Promise.resolve(supabase.from("conversations").insert({ transcript, agent_name: agent, response })).catch(() => {});
     extractMemoryFacts(transcript, response, agent).catch(() => {});
 
     return NextResponse.json({ agent, intent, response, session_id: sessionId });
