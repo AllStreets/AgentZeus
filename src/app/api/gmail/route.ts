@@ -33,13 +33,12 @@ export async function GET(req: NextRequest) {
 
   try {
     if (action === "summary") {
-      // Fetch labels for unread count + inbox messages (all, not just unread)
-      const [labelsData, listData] = await Promise.all([
-        gmailFetch("/users/me/labels", token),
-        gmailFetch("/users/me/messages?labelIds=INBOX&maxResults=15&orderBy=internalDate", token),
+      // Fetch INBOX label detail (has messagesUnread) + inbox messages in parallel
+      const [inboxLabel, listData] = await Promise.all([
+        gmailFetch("/users/me/labels/INBOX", token) as Promise<GmailLabel>,
+        gmailFetch("/users/me/messages?labelIds=INBOX&maxResults=15", token),
       ]);
 
-      const inboxLabel = (labelsData.labels as GmailLabel[]).find((l) => l.id === "INBOX");
       const unreadCount = inboxLabel?.messagesUnread ?? 0;
 
       const messages: { id: string; subject: string; from: string; snippet: string; date: string; unread: boolean }[] = [];
