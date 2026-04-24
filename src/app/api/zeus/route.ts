@@ -28,7 +28,13 @@ ${Object.entries(AGENT_DESCRIPTIONS)
 
 If the command is a general greeting or doesn't fit any agent, use "zeus" as the agent.
 
-Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description of what the user wants>" }`,
+Also detect navigation commands and return a navigate: intent:
+- "show my tasks" / "open tasks" / "show Artemis" → agent: "artemis", intent: "navigate:artemis"
+- "show notes" / "open Hera" / "my notes" → agent: "hera", intent: "navigate:hera"
+- "open settings" / "go to settings" → agent: "zeus", intent: "navigate:settings"
+- "show [agent name]" / "open [agent name]" → agent: that agent's name, intent: "navigate:[agent]"
+
+Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or navigate:target>" }`,
       },
       { role: "user", content: transcript },
     ],
@@ -53,6 +59,20 @@ async function handleAgentRequest(
     event_type: "thinking",
     content: intent,
   });
+
+  // Navigation intents — short acknowledgment, no agent sub-call needed
+  if (intent.startsWith("navigate:")) {
+    const target = intent.replace("navigate:", "");
+    const label = target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`;
+    const reply = `Opening ${label}.`;
+    await supabase.from("agent_events").insert({
+      session_id: sessionId,
+      agent_name: agent,
+      event_type: "complete",
+      content: reply,
+    });
+    return reply;
+  }
 
   if (agent === "zeus") {
     const response = await openai.chat.completions.create({
