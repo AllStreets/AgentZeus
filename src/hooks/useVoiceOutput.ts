@@ -17,16 +17,18 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
   // Call this synchronously inside a user gesture (orb tap) to satisfy mobile autoplay policy.
   // AudioContext and HTMLAudioElement share the same permission on Chrome/Safari.
   const unlockAudio = useCallback(() => {
-    if (audioCtxRef.current) return;
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    // Play a 1-sample silent buffer to activate the context
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-    audioCtxRef.current = ctx;
+    try {
+      if (audioCtxRef.current) return;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      audioCtxRef.current = ctx;
+    } catch { /* non-fatal — TTS may not work but voice input should */ }
   }, []);
 
   const stop = useCallback(() => {
@@ -59,6 +61,7 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
 
       // Reuse the unlocked AudioContext — decodeAudioData + BufferSource works on all mobile browsers
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) throw new Error("AudioContext not supported");
       const ctx = audioCtxRef.current || new AudioCtx();
       audioCtxRef.current = ctx;
 
