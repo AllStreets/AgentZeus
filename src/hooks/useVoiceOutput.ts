@@ -6,12 +6,28 @@ interface UseVoiceOutputReturn {
   isSpeaking: boolean;
   speak: (text: string) => Promise<void>;
   stop: () => void;
+  unlockAudio: () => void;
 }
 
 export function useVoiceOutput(): UseVoiceOutputReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaSourceRef = useRef<MediaSource | null>(null);
+  const unlockedRef = useRef(false);
+
+  // Must be called during a user gesture (e.g. orb tap) to unlock audio on iOS/Android
+  const unlockAudio = useCallback(() => {
+    if (unlockedRef.current) return;
+    // Play a silent buffer — this registers audio permission with the browser
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+    ctx.close();
+    unlockedRef.current = true;
+  }, []);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -105,5 +121,5 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
     }
   }, [stop]);
 
-  return { isSpeaking, speak, stop };
+  return { isSpeaking, speak, stop, unlockAudio };
 }

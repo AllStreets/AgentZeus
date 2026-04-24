@@ -52,7 +52,7 @@ export default function Dashboard() {
   const [rightOpen, setRightOpen] = useState(true);
 
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
-  const { isSpeaking, speak } = useVoiceOutput();
+  const { isSpeaking, speak, unlockAudio } = useVoiceOutput();
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
@@ -185,7 +185,7 @@ export default function Dashboard() {
 
           <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-hidden">
             <motion.div className="py-6" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <VoiceOrb isListening={isListening} isSpeaking={isSpeaking} isProcessing={isProcessing} onClick={toggleListening} />
+              <VoiceOrb isListening={isListening} isSpeaking={isSpeaking} isProcessing={isProcessing} onClick={() => { unlockAudio(); toggleListening(); }} />
             </motion.div>
 
             <motion.div className="w-full max-w-2xl flex-1 overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
