@@ -106,10 +106,21 @@ export default function Dashboard() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleListening]);
 
+  const [replayEntry, setReplayEntry] = useState<ConversationEntry | null>(null);
+
+  function handleReplay(entry: ConversationEntry) {
+    setReplayEntry(entry);
+    // Clear after 100ms so TranscriptDisplay re-animates
+    setTimeout(() => setReplayEntry(null), 100);
+    setTimeout(() => setReplayEntry(entry), 150);
+  }
+
   const displayAgents = agents.filter((a) => a.name !== "zeus");
   const currentActiveAgent = activeAgent || selectedAgent;
   const openPanelAgent = openPanel ? getAgent(openPanel) : null;
   const PanelContent = openPanel ? PANEL_COMPONENTS[openPanel] : null;
+  const displayResponse = replayEntry ? replayEntry.response : (lastResponse?.response || null);
+  const displayAgent = replayEntry ? replayEntry.agent as AgentName : activeAgent;
 
   return (
     <main className="h-screen grid-bg scan-line relative overflow-hidden">
@@ -167,10 +178,10 @@ export default function Dashboard() {
 
             <motion.div className="w-full max-w-2xl flex-1 overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
               <TranscriptDisplay
-                transcript={transcript}
-                interimTranscript={interimTranscript}
-                response={lastResponse?.response || null}
-                activeAgent={activeAgent}
+                transcript={replayEntry ? replayEntry.transcript : transcript}
+                interimTranscript={replayEntry ? "" : interimTranscript}
+                response={displayResponse}
+                activeAgent={displayAgent}
                 history={conversationHistory}
               />
             </motion.div>
@@ -194,7 +205,7 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <motion.div className="w-72 border-l border-white/[0.03] p-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-          <ActivityFeed events={allEvents} />
+          <ActivityFeed events={allEvents} history={conversationHistory} onReplay={handleReplay} />
         </motion.div>
       </div>
 

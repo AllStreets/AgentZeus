@@ -3,48 +3,86 @@ import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
 import { getGoogleToken } from "@/lib/googleAuth";
 
-async function getGmailContext(): Promise<string> {
+interface EmailMsg {
+  subject: string;
+  from: string;
+  snippet: string;
+}
+
+async function getGmailContext(): Promise<{ summary: string; messages: EmailMsg[] }> {
   const token = await getGoogleToken("gmail");
-  if (!token) return "Gmail is not connected.";
+  if (!token) return { summary: "Gmail is not connected.", messages: [] };
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/gmail`, {
-      headers: { Cookie: "" }, // server-to-server, no cookies needed
+    const res = await fetch(`${baseUrl}/api/gmail`, { cache: "no-store" });
+    const data = await res.json();
+    if (!data.connected) return { summary: "Gmail is not connected.", messages: [] };
+
+    const messages: EmailMsg[] = (data.messages || []).slice(0, 8);
+    const list = messages.map((m: EmailMsg) => `Subject: "${m.subject}" | From: ${m.from} | Preview: ${m.snippet}`).join("\n");
+    return {
+      summary: `Gmail connected. Unread: ${data.unreadCount}.\n\nRecent emails:\n${list || "none"}`,
+      messages,
+    };
+  } catch {
+    return { summary: "Gmail fetch failed.", messages: [] };
+  }
+}
+
+async function createGmailDraft(token: string, to: string, subject: string, body: string): Promise<string | null> {
+  try {
+    const raw = btoa(
+      `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`
+    ).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ message: { raw } }),
     });
     const data = await res.json();
-    if (!data.connected) return "Gmail is not connected.";
-
-    const subjects = (data.messages || []).slice(0, 5).map((m: { subject: string; from: string }) => `"${m.subject}" from ${m.from}`).join("; ");
-    return `Gmail connected. Unread: ${data.unreadCount}. Recent unread: ${subjects || "none"}.`;
+    return data.id || null;
   } catch {
-    return "Gmail connected but failed to fetch.";
+    return null;
   }
 }
 
 export async function POST(req: NextRequest) {
-  const { intent, transcript, session_id } = await req.json();
+  const { intent, transcript, session_id, slack_webhook } = await req.json();
   const supabase = createServiceClient();
 
-  const gmailContext = await getGmailContext();
+  const { summary: gmailSummary, messages } = await getGmailContext();
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
-        content: `You are Hermes, the Communications agent. You help users manage email and messaging.
+        content: `You are Hermes, the Communications agent.
 
-Current Gmail context:
-${gmailContext}
+${gmailSummary}
 
-If the user asks to read an email, summarize the most relevant one from the context. If they ask to draft or send, write the draft and note it needs confirmation. If Gmail isn't connected, tell them how to connect it.
+${slack_webhook ? "Slack webhook is connected — you can send Slack messages." : "Slack is not connected."}
+
+If the user wants to draft a reply, write the full email body in the draft_reply action.
+If the user wants to send a Slack message, include a send_slack action.
 
 Respond with JSON:
 {
   "response": "<spoken response — concise, under 3 sentences>",
-  "actions": []
+  "actions": [
+    {
+      "type": "draft_reply" | "send_slack",
+      "data": {
+        "to"?: "email address",
+        "subject"?: "Re: subject",
+        "body"?: "email body text",
+        "message"?: "slack message text"
+      }
+    }
+  ]
 }`,
       },
       { role: "user", content: transcript },
@@ -52,6 +90,33 @@ Respond with JSON:
   });
 
   const content = JSON.parse(response.choices[0].message.content!);
+
+  // Execute actions
+  for (const action of content.actions || []) {
+    if (action.type === "draft_reply" && action.data?.body) {
+      const gmailToken = await getGoogleToken("gmail");
+      if (gmailToken) {
+        const draftId = await createGmailDraft(
+          gmailToken,
+          action.data.to || "",
+          action.data.subject || "Re:",
+          action.data.body
+        );
+        if (draftId) {
+          content.response += " Draft saved to Gmail.";
+        }
+      }
+    }
+
+    if (action.type === "send_slack" && action.data?.message && slack_webhook) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      await fetch(`${baseUrl}/api/slack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ webhookUrl: slack_webhook, message: action.data.message }),
+      }).catch(() => {});
+    }
+  }
 
   await supabase.from("agent_events").insert({
     session_id,

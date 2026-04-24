@@ -13,28 +13,30 @@ export async function POST(req: NextRequest) {
     .limit(20);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-4o-mini",
     response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
-        content: `You are Artemis, the Tasks & Productivity agent. You manage todos, habits, goals, and focus sessions.
+        content: `You are Artemis, the Tasks & Productivity agent.
 
 Current tasks:
 ${JSON.stringify(tasks || [], null, 2)}
 
-Based on the user's request, respond with JSON:
+If the user asks to "break down" a project or task, generate 3-7 specific subtasks as create_task actions, then generate one "save_note" action with a structured breakdown summary (for Hera's memory).
+
+Respond with JSON:
 {
-  "response": "<your spoken response to the user>",
+  "response": "<spoken response>",
   "actions": [
     {
-      "type": "create_task" | "update_task" | "delete_task" | "list_tasks",
-      "data": { ...relevant fields: title, description, status, priority, due_date, id }
+      "type": "create_task" | "update_task" | "delete_task" | "list_tasks" | "save_note",
+      "data": { title?, description?, status?, priority?, due_date?, id?, content?, tags? }
     }
   ]
 }
 
-Keep responses concise and conversational — these will be spoken aloud. If listing tasks, summarize them naturally rather than reading raw data.`,
+Keep responses concise — spoken aloud. If listing tasks, summarize naturally.`,
       },
       { role: "user", content: transcript },
     ],
@@ -53,23 +55,26 @@ Keep responses concise and conversational — these will be spoken aloud. If lis
         });
         break;
       case "update_task":
-        await supabase
-          .from("tasks")
-          .update({
-            status: action.data.status,
-            title: action.data.title,
-            priority: action.data.priority,
-          })
-          .eq("id", action.data.id);
+        await supabase.from("tasks").update({
+          status: action.data.status,
+          title: action.data.title,
+          priority: action.data.priority,
+        }).eq("id", action.data.id);
         break;
       case "delete_task":
         await supabase.from("tasks").delete().eq("id", action.data.id);
+        break;
+      case "save_note":
+        await supabase.from("notes").insert({
+          content: action.data.content,
+          tags: action.data.tags || ["task-breakdown"],
+        });
         break;
     }
   }
 
   await supabase.from("agent_events").insert({
-    session_id: session_id,
+    session_id,
     agent_name: "artemis",
     event_type: "complete",
     content: content.response,

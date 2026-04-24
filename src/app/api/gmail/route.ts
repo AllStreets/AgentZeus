@@ -3,12 +3,11 @@ import { getGoogleToken } from "@/lib/googleAuth";
 
 interface GmailMessage {
   id: string;
-  threadId: string;
   snippet: string;
+  labelIds?: string[];
   payload?: {
     headers?: { name: string; value: string }[];
   };
-  internalDate?: string;
 }
 
 interface GmailLabel {
@@ -20,6 +19,7 @@ interface GmailLabel {
 async function gmailFetch(path: string, token: string) {
   const res = await fetch(`https://gmail.googleapis.com/gmail/v1${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error(`Gmail ${res.status}`);
   return res.json();
@@ -29,38 +29,42 @@ export async function GET(req: NextRequest) {
   const action = req.nextUrl.searchParams.get("action") || "summary";
   const token = await getGoogleToken("gmail");
 
-  if (!token) {
-    return NextResponse.json({ connected: false });
-  }
+  if (!token) return NextResponse.json({ connected: false });
 
   try {
     if (action === "summary") {
+      // Fetch labels for unread count + inbox messages (all, not just unread)
       const [labelsData, listData] = await Promise.all([
         gmailFetch("/users/me/labels", token),
-        gmailFetch("/users/me/messages?labelIds=INBOX&labelIds=UNREAD&maxResults=10", token),
+        gmailFetch("/users/me/messages?labelIds=INBOX&maxResults=15&orderBy=internalDate", token),
       ]);
 
       const inboxLabel = (labelsData.labels as GmailLabel[]).find((l) => l.id === "INBOX");
       const unreadCount = inboxLabel?.messagesUnread ?? 0;
 
-      const messages: { id: string; subject: string; from: string; snippet: string; date: string }[] = [];
+      const messages: { id: string; subject: string; from: string; snippet: string; date: string; unread: boolean }[] = [];
 
       if (listData.messages?.length) {
+        // Fetch metadata for each message — each header must be a separate metadataHeaders param
         const details = await Promise.all(
-          listData.messages.slice(0, 8).map((m: { id: string }) =>
-            gmailFetch(`/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject,From,Date`, token)
+          (listData.messages as { id: string }[]).slice(0, 12).map((m) =>
+            gmailFetch(
+              `/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,
+              token
+            )
           )
         );
 
         for (const msg of details as GmailMessage[]) {
           const headers = msg.payload?.headers || [];
-          const get = (name: string) => headers.find((h) => h.name === name)?.value || "";
+          const get = (name: string) => headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
           messages.push({
             id: msg.id,
             subject: get("Subject") || "(no subject)",
             from: get("From"),
             snippet: msg.snippet,
             date: get("Date"),
+            unread: msg.labelIds?.includes("UNREAD") ?? false,
           });
         }
       }

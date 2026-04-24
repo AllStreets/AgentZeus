@@ -22,9 +22,14 @@ export default function HeraPanel() {
         />
       </div>
 
-      <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider">
-        Add notes by saying &quot;Hera, remember that...&quot;
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider">
+          Say &quot;Hera, remember that...&quot;
+        </p>
+        <a href="/clip" target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono text-purple-400/60 hover:text-purple-400 transition-colors">
+          Web clipper
+        </a>
+      </div>
 
       {loading ? (
         <p className="text-xs text-slate-600 text-center py-8">Loading...</p>

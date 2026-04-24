@@ -135,7 +135,7 @@ async function handleAgentRequest(
 }
 
 export async function POST(req: NextRequest) {
-  const { transcript, github_token, vercel_token } = await req.json();
+  const { transcript, github_token, vercel_token, slack_webhook } = await req.json();
 
   if (!transcript?.trim()) {
     return NextResponse.json({ error: "No transcript provided" }, { status: 400 });
@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
   const extras: Record<string, string | undefined> = {};
   if (agent === "athena" && github_token) extras.github_token = github_token;
   if (agent === "ares" && vercel_token) extras.vercel_token = vercel_token;
+  if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
   const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
 
   const supabase = createServiceClient();
@@ -156,5 +157,37 @@ export async function POST(req: NextRequest) {
     response,
   });
 
+  // Asynchronously extract memory facts — fire and forget, doesn't block response
+  extractMemoryFacts(transcript, response, agent).catch(() => {});
+
   return NextResponse.json({ agent, intent, response, session_id: sessionId });
+}
+
+async function extractMemoryFacts(transcript: string, response: string, agent: string): Promise<void> {
+  const supabase = createServiceClient();
+
+  const extraction = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `Extract any memorable facts from this conversation exchange — names, decisions, commitments, preferences, or key information the user shared. Return only if something genuinely worth remembering was said.
+
+Respond with JSON: { "facts": ["fact1", "fact2"] } — empty array if nothing worth saving.`,
+      },
+      { role: "user", content: `User: ${transcript}\nAgent (${agent}): ${response}` },
+    ],
+  });
+
+  const parsed = JSON.parse(extraction.choices[0].message.content!);
+  const facts: string[] = parsed.facts || [];
+
+  if (facts.length > 0) {
+    const content = facts.map((f) => `- ${f}`).join("\n");
+    await supabase.from("notes").insert({
+      content: `[Memory from conversation]\n${content}`,
+      tags: ["memory", "conversation", agent],
+    });
+  }
 }

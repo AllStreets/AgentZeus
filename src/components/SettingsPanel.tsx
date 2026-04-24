@@ -24,12 +24,14 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [voice, setVoice] = useState<Voice>("onyx");
   const [githubToken, setGithubToken] = useState("");
   const [vercelToken, setVercelToken] = useState("");
+  const [slackWebhook, setSlackWebhook] = useState("");
 
   useEffect(() => {
     if (open) {
       setVoice((localStorage.getItem("tts_voice") as Voice) || "onyx");
       setGithubToken(localStorage.getItem("github_token") || "");
       setVercelToken(localStorage.getItem("vercel_token") || "");
+      setSlackWebhook(localStorage.getItem("slack_webhook") || "");
     }
   }, [open]);
 
@@ -37,6 +39,7 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
     localStorage.setItem("tts_voice", voice);
     localStorage.setItem("github_token", githubToken);
     localStorage.setItem("vercel_token", vercelToken);
+    localStorage.setItem("slack_webhook", slackWebhook);
     onClose();
   }
 
@@ -129,6 +132,17 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                         placeholder="vercel_..."
                         className="w-full bg-white/[0.03] border border-white/[0.06] rounded-md px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none focus:border-blue-500/30 transition-colors"
                       />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1.5">Slack Incoming Webhook</label>
+                      <input
+                        type="password"
+                        value={slackWebhook}
+                        onChange={(e) => setSlackWebhook(e.target.value)}
+                        placeholder="https://hooks.slack.com/services/..."
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-md px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none focus:border-blue-500/30 transition-colors"
+                      />
+                      <p className="text-[10px] text-slate-600 mt-1">Slack → Apps → Incoming Webhooks → Add New</p>
                     </div>
                   </div>
                 )}
