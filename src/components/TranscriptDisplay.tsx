@@ -57,6 +57,7 @@ export default function TranscriptDisplay({
       <AnimatePresence mode="wait">
         {(transcript || interimTranscript) && (
           <motion.div
+            key="user-input"
             className="flex items-start gap-3"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,6 +75,7 @@ export default function TranscriptDisplay({
 
         {response && (
           <motion.div
+            key="agent-response"
             className="flex items-start gap-3"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
