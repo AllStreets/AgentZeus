@@ -50,6 +50,16 @@ Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or n
   return JSON.parse(content);
 }
 
+function logEvent(supabase: ReturnType<typeof createServiceClient>, sessionId: string, agentName: string, type: string, content: string) {
+  // Fire-and-forget — never block the response on DB writes
+  Promise.resolve(supabase.from("agent_events").insert({
+    session_id: sessionId,
+    agent_name: agentName,
+    event_type: type,
+    content,
+  })).catch(() => {});
+}
+
 async function handleAgentRequest(
   agent: AgentName,
   intent: string,
@@ -58,45 +68,25 @@ async function handleAgentRequest(
   extras?: Record<string, string | undefined>
 ): Promise<string> {
   const supabase = createServiceClient();
+  logEvent(supabase, sessionId, agent, "thinking", intent);
 
-  // Write "thinking" event
-  await supabase.from("agent_events").insert({
-    session_id: sessionId,
-    agent_name: agent,
-    event_type: "thinking",
-    content: intent,
-  });
-
-  // Daily briefing — multi-agent sequence
   if (intent === "briefing") {
-    const baseUrl = getBaseUrl();
     try {
-      const res = await fetch(`${baseUrl}/api/briefing`);
+      const res = await fetch(`${getBaseUrl()}/api/briefing`);
       const data = await res.json();
       const reply = data.briefing;
-      await supabase.from("agent_events").insert({
-        session_id: sessionId,
-        agent_name: "zeus",
-        event_type: "complete",
-        content: reply,
-      });
+      logEvent(supabase, sessionId, "zeus", "complete", reply);
       return reply;
     } catch {
       return "I had trouble assembling your briefing. Please try again.";
     }
   }
 
-  // Navigation intents — short acknowledgment, no agent sub-call needed
   if (intent.startsWith("navigate:")) {
     const target = intent.replace("navigate:", "");
     const label = target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`;
     const reply = `Opening ${label}.`;
-    await supabase.from("agent_events").insert({
-      session_id: sessionId,
-      agent_name: agent,
-      event_type: "complete",
-      content: reply,
-    });
+    logEvent(supabase, sessionId, agent, "complete", reply);
     return reply;
   }
 
@@ -106,35 +96,28 @@ async function handleAgentRequest(
       messages: [
         {
           role: "system",
-          content:
-            "You are Zeus, a powerful AI assistant orchestrator. You are the main interface of the AgentZeus dashboard. Be helpful, concise, and speak with quiet authority. Keep responses under 3 sentences unless more detail is needed.",
+          content: "You are Zeus, a powerful AI assistant orchestrator. You are the main interface of the AgentZeus dashboard. Be helpful, concise, and speak with quiet authority. Keep responses under 3 sentences unless more detail is needed.",
         },
         { role: "user", content: transcript },
       ],
     });
-
     const reply = response.choices[0].message.content!;
-
-    await supabase.from("agent_events").insert({
-      session_id: sessionId,
-      agent_name: "zeus",
-      event_type: "complete",
-      content: reply,
-    });
-
+    logEvent(supabase, sessionId, "zeus", "complete", reply);
     return reply;
   }
 
-  // Delegate to agent-specific API route
-  const baseUrl = getBaseUrl();
-  const agentResponse = await fetch(`${baseUrl}/api/agents/${agent}`, {
+  const agentResponse = await fetch(`${getBaseUrl()}/api/agents/${agent}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ intent, transcript, session_id: sessionId, ...extras }),
   });
 
   const data = await agentResponse.json();
-  return data.response;
+  return data.response ?? "No response from agent.";
+}
+
+export async function GET() {
+  return NextResponse.json({ status: "ok", ts: Date.now() });
 }
 
 export async function POST(req: NextRequest) {
