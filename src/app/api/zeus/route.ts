@@ -154,13 +154,9 @@ export async function POST(req: NextRequest) {
     if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
     const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
 
+    // Fire-and-forget — don't await these, they must not delay the response
     const supabase = createServiceClient();
-    await supabase.from("conversations").insert({
-      transcript,
-      agent_name: agent,
-      response,
-    });
-
+    supabase.from("conversations").insert({ transcript, agent_name: agent, response }).catch(() => {});
     extractMemoryFacts(transcript, response, agent).catch(() => {});
 
     return NextResponse.json({ agent, intent, response, session_id: sessionId });

@@ -21,21 +21,36 @@ export function useZeus(): UseZeusReturn {
     setIsProcessing(true);
     setActiveAgent("zeus");
 
-    try {
-      const github_token = typeof window !== "undefined" ? localStorage.getItem("github_token") || undefined : undefined;
-      const vercel_token = typeof window !== "undefined" ? localStorage.getItem("vercel_token") || undefined : undefined;
-      const slack_webhook = typeof window !== "undefined" ? localStorage.getItem("slack_webhook") || undefined : undefined;
+    const body = JSON.stringify({
+      transcript,
+      github_token: typeof window !== "undefined" ? localStorage.getItem("github_token") || undefined : undefined,
+      vercel_token: typeof window !== "undefined" ? localStorage.getItem("vercel_token") || undefined : undefined,
+      slack_webhook: typeof window !== "undefined" ? localStorage.getItem("slack_webhook") || undefined : undefined,
+    });
 
-      const res = await fetch("/api/zeus", {
+    const attemptFetch = async (): Promise<Response> => {
+      return fetch("/api/zeus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript, github_token, vercel_token, slack_webhook }),
+        body,
+        signal: AbortSignal.timeout(28000),
       });
+    };
+
+    try {
+      let res: Response;
+      try {
+        res = await attemptFetch();
+      } catch {
+        // Single retry on network failure (flaky mobile connection)
+        await new Promise((r) => setTimeout(r, 1000));
+        res = await attemptFetch();
+      }
 
       if (!res.ok) {
         let detail = `HTTP ${res.status}`;
         try { const e = await res.json(); detail = e.error || detail; } catch { /* ignore */ }
-        const errResponse: ZeusResponse = { agent: "zeus", intent: "error", response: `Request failed: ${detail}`, session_id: "" };
+        const errResponse: ZeusResponse = { agent: "zeus", intent: "error", response: `Error: ${detail}`, session_id: "" };
         setActiveAgent("zeus");
         setLastResponse(errResponse);
         return errResponse;
@@ -46,8 +61,11 @@ export function useZeus(): UseZeusReturn {
       setLastResponse(data);
       return data;
     } catch (error) {
-      console.error("Zeus error:", error);
-      return null;
+      const msg = error instanceof Error ? error.message : "Network error";
+      const errResponse: ZeusResponse = { agent: "zeus", intent: "error", response: `Error: ${msg}`, session_id: "" };
+      setActiveAgent("zeus");
+      setLastResponse(errResponse);
+      return errResponse;
     } finally {
       setTimeout(() => {
         setIsProcessing(false);
