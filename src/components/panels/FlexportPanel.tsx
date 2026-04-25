@@ -76,13 +76,6 @@ export default function FlexportPanel() {
       setResponse(agentResponse);
       setLastQuery(transcript);
 
-      // Open the main app when intent is navigation or "open" keyword
-      const lower = transcript.toLowerCase();
-      if (intent.includes("navigate") || lower.includes("open flexport") || lower.includes("launch flexport")) {
-        window.open(FLEXPORT_URL, "_blank", "noopener,noreferrer");
-        return;
-      }
-
       // Navigate to the specific section that matches the query
       const page = detectPage(transcript) ?? detectPage(agentResponse);
       if (page !== undefined) openPage(page);

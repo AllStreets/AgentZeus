@@ -76,13 +76,6 @@ export default function ChicagoPanel() {
       setResponse(agentResponse);
       setLastQuery(transcript);
 
-      // Open the main app when intent is navigation or "open" keyword
-      const lower = transcript.toLowerCase();
-      if (intent.includes("navigate") || lower.includes("open chicago") || lower.includes("launch chicago")) {
-        window.open(CHICAGO_URL, "_blank", "noopener,noreferrer");
-        return;
-      }
-
       // Navigate to the specific section that matches the query
       const page = detectPage(transcript) || detectPage(agentResponse);
       if (page) openPage(page);

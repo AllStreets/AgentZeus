@@ -108,14 +108,6 @@ export default function MeridianPanel() {
       if (agent !== "meridian") return;
       flash(transcript.slice(0, 48));
 
-      if (
-        intent.includes("navigate") ||
-        transcript.toLowerCase().includes("open") ||
-        transcript.toLowerCase().includes("launch")
-      ) {
-        window.open(MERIDIAN_URL, "_blank", "noopener,noreferrer");
-      }
-
       const lower = transcript.toLowerCase();
       const catMap: Record<string, string> = {
         geo: "geo", geopolit: "geo",
