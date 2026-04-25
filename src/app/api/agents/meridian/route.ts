@@ -29,6 +29,21 @@ function detectImmediateActions(transcript: string): Array<{ cmd: string; payloa
   if (/\bcountri(es|y)\b|\bborders?\b/.test(t)) actions.push({ cmd: "toggle_overlay", payload: { overlay: "countries" } });
   if (/\bthreats?\b/.test(t))            actions.push({ cmd: "toggle_overlay", payload: { overlay: "threats" } });
   if (/\bsanctions?\b/.test(t))          actions.push({ cmd: "toggle_overlay", payload: { overlay: "sanctions" } });
+  if (/\bshipping\b|\bvessels?\b|\bships?\b|\bfreight\b/.test(t)) actions.push({ cmd: "toggle_overlay", payload: { overlay: "shipping" } });
+  if (/\bearthquakes?\b|\bquakes?\b|\beq\b/.test(t)) actions.push({ cmd: "toggle_overlay", payload: { overlay: "eq" } });
+
+  // Analysis tools
+  if (/\bsilence\b|\bblackout\b|\bmedia silence\b/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "silence" } });
+  if (/\bdiverge\b|\bdivergence\b|\bnarrative diverge/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "diverge" } });
+  if (/\bcascade\b|\bcascading\b/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "cascade" } });
+  if (/\blive news\b|\bbroadcast\b|\blive broadcast\b/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "livenews" } });
+  if (/\bwebcam\b|\bcam\b|\bcameras?\b/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "webcams" } });
+  if (/\bwargame\b|\bwar game\b|\bscenario\b/.test(t)) actions.push({ cmd: "toggle_tool", payload: { tool: "wargame" } });
+
+  // Page opens
+  if (/\banalyst\b|\banalyst (board|mode|view)\b/.test(t)) actions.push({ cmd: "open_page", payload: { page: "analyst" } });
+  if (/\b(daily )?brief\b|\bbriefing\b/.test(t)) actions.push({ cmd: "open_page", payload: { page: "brief" } });
+  if (/\bmap key\b|\bmapkey\b|\blegend\b/.test(t)) actions.push({ cmd: "open_page", payload: { page: "mapkey" } });
 
   // Category filter — only the most specific match wins
   if (/\bmilitary\b|\bwar\b|\barmy\b|\btroops\b|\bmil\b/.test(t))

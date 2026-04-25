@@ -2,20 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, ExternalLink, Radio, Users, BarChart2, Ship, Zap, Target, Activity } from "lucide-react";
+import { TrendingUp, ExternalLink, Radio, Users, BarChart2, Ship, Zap, Target, Activity, Plane, Truck, Map, Calculator, BookOpen, Rocket, Settings } from "lucide-react";
 import { agentBus } from "@/lib/agentBus";
 
 const FLEXPORT_URL = "http://localhost:5174";
 
-// Route map: only use routes that actually exist in the Flexport app.
+// Route map — all actual routes in the Flexport app.
 // Prospects, Pipeline, and Signals all live on the home page "/".
 const PAGES = [
-  { id: "",            label: "Prospects",   icon: Users,     color: "#f59e0b", keywords: ["prospect","lead","contact","account","who should i call","outreach"] },
-  { id: "",            label: "Pipeline",    icon: BarChart2, color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm"] },
-  { id: "vessels",     label: "Vessels",     icon: Ship,      color: "#0A84FF", keywords: ["vessel","ship","ocean","freight","cargo","container","shipping","port"] },
-  { id: "",            label: "Signals",     icon: Zap,       color: "#FF2D55", keywords: ["signal","news","alert","trigger","trade news","tariff news","indicator"] },
-  { id: "performance", label: "Performance", icon: Activity,  color: "#BF5AF2", keywords: ["performance","kpi","quota","metrics","numbers","goal","target","attainment"] },
-  { id: "trade",       label: "Trade",       icon: Target,    color: "#FF9F0A", keywords: ["tariff","hs code","duty","tax","trade","import","export","globe","map"] },
+  { id: "",            label: "Prospects",         icon: Users,       color: "#f59e0b", keywords: ["prospect","lead","contact","account","who should i call","outreach"] },
+  { id: "",            label: "Pipeline",           icon: BarChart2,   color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm"] },
+  { id: "",            label: "Signals",            icon: Zap,         color: "#FF2D55", keywords: ["signal","news","alert","trigger","trade news","tariff news","indicator"] },
+  { id: "vessels",     label: "Vessels",            icon: Ship,        color: "#0A84FF", keywords: ["vessel","ship","ocean","freight","cargo","container","shipping","port"] },
+  { id: "flights",     label: "Flights",            icon: Plane,       color: "#64D2FF", keywords: ["flight","air","airfreight","airline","cargo plane","air cargo"] },
+  { id: "land",        label: "Land Freight",       icon: Truck,       color: "#FF9F0A", keywords: ["land","truck","road","ground","drayage","ltl","ftl","inland"] },
+  { id: "trade",       label: "Trade",              icon: Target,      color: "#30D158", keywords: ["trade","import","export","globe","trade map","trade flow"] },
+  { id: "performance", label: "Performance",        icon: Activity,    color: "#BF5AF2", keywords: ["performance","kpi","quota","metrics","numbers","goal","target","attainment"] },
+  { id: "market",      label: "Market Map",         icon: Map,         color: "#5E5CE6", keywords: ["market","market map","territory","geographic","coverage","region map"] },
+  { id: "tariff",      label: "Tariff Calculator",  icon: Calculator,  color: "#FF453A", keywords: ["tariff","hs code","duty","duty rate","calculate","calculator","harmonized"] },
+  { id: "research",    label: "Research",           icon: BookOpen,    color: "#636366", keywords: ["research","intel","investigate","company","account research","background"] },
+  { id: "pilot",       label: "Pilot",              icon: Rocket,      color: "#FFD60A", keywords: ["pilot","trial","beta","test run","new feature","pilot program"] },
+  { id: "settings",    label: "Settings",           icon: Settings,    color: "#8E8E93", keywords: ["settings","config","preferences","account settings","setup"] },
 ];
 
 async function askZeus(query: string): Promise<string | null> {
@@ -128,7 +135,7 @@ export default function FlexportPanel() {
             const isActive = activePage === p.id;
             return (
               <button
-                key={p.id}
+                key={p.label}
                 onClick={() => openPage(p.id)}
                 className="flex items-center gap-2 px-2.5 py-2 rounded text-[10px] font-mono text-left transition-all"
                 style={{
@@ -155,8 +162,12 @@ export default function FlexportPanel() {
             "Hot trade signals",
             "Top prospects by urgency",
             "Vessel tracking update",
+            "Air freight status",
+            "Land freight alerts",
             "Performance vs quota",
             "Tariff changes this week",
+            "Market coverage gaps",
+            "Research top account",
           ].map((q) => (
             <button
               key={q}

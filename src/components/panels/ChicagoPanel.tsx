@@ -2,19 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ExternalLink, Radio, Train, Cloud, Utensils, Music, Trophy, Moon } from "lucide-react";
+import { MapPin, ExternalLink, Radio, Train, Cloud, Utensils, Music, Trophy, Moon, Home, Compass, User, Star, Sun, Phone, DollarSign, Newspaper, Heart } from "lucide-react";
 import { agentBus } from "@/lib/agentBus";
 
 const CHICAGO_URL = "http://localhost:5173";
 
 const PAGES = [
+  { id: "",              label: "Home",          icon: Home,     color: "#7B61FF",  keywords: ["home","dashboard","overview","main"] },
   { id: "transit",       label: "Transit",       icon: Train,    color: "#0A84FF",  keywords: ["train","cta","transit","l ","rail","bus","stop","line","blue","red","green"] },
   { id: "weather",       label: "Weather",       icon: Cloud,    color: "#30D158",  keywords: ["weather","rain","cold","warm","wind","lake","forecast","temperature","snow"] },
   { id: "food",          label: "Food",          icon: Utensils, color: "#FF9F0A",  keywords: ["food","eat","restaurant","dinner","lunch","breakfast","brunch","cuisine","pizza"] },
   { id: "sports",        label: "Sports",        icon: Trophy,   color: "#FF2D55",  keywords: ["sport","cubs","bulls","bears","hawks","sox","fire","sky","game","score","stadium"] },
-  { id: "events",        label: "Events",        icon: Music,    color: "#BF5AF2",  keywords: ["event","concert","show","ticket","festival","tonight","performance","theatre"] },
+  { id: "events",        label: "Events",        icon: Music,    color: "#BF5AF2",  keywords: ["event","concert","show","ticket","festival","performance","theatre"] },
   { id: "nightlife",     label: "Nightlife",     icon: Moon,     color: "#FF6B35",  keywords: ["bar","night","drink","cocktail","club","lounge","nightlife","after hours"] },
   { id: "neighborhoods", label: "Areas",         icon: MapPin,   color: "#64D2FF",  keywords: ["neighborhood","area","streeterville","wicker","lincoln","logan","pilsen","loop"] },
+  { id: "explore",       label: "Explore",       icon: Compass,  color: "#34C759",  keywords: ["explore","discover","find","attractions","sightseeing","tourist","what to do"] },
+  { id: "me",            label: "My Chicago",    icon: User,     color: "#5E5CE6",  keywords: ["my chicago","personalized","saved","favorites","profile","my places"] },
+  { id: "tonight",       label: "Tonight",       icon: Star,     color: "#FFD60A",  keywords: ["tonight","tonight","what to do tonight","evening","tonight's"] },
+  { id: "beach",         label: "Beach",         icon: Sun,      color: "#FF9F0A",  keywords: ["beach","lake michigan","lakefront","swim","sand","navy pier","montrose"] },
+  { id: "311",           label: "311 Reports",   icon: Phone,    color: "#FF453A",  keywords: ["311","report","pothole","complaint","service request","city services","issue"] },
+  { id: "finance",       label: "Finance",       icon: DollarSign, color: "#30D158", keywords: ["finance","money","stock","market","invest","economy","financial","budget"] },
+  { id: "news",          label: "News",          icon: Newspaper, color: "#636366", keywords: ["news","politics","government","mayor","city hall","alderman","policy","chicago news"] },
+  { id: "health",        label: "Health",        icon: Heart,    color: "#FF375F",  keywords: ["health","hospital","clinic","doctor","wellness","covid","public health","medical"] },
 ];
 
 async function askZeus(query: string): Promise<string | null> {
@@ -45,7 +54,8 @@ export default function ChicagoPanel() {
 
   function openPage(page: string) {
     setActivePage(page);
-    window.open(`${CHICAGO_URL}/${page}`, "_blank", "noopener,noreferrer");
+    const url = page ? `${CHICAGO_URL}/${page}` : CHICAGO_URL;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function handleQuickAsk(query: string) {
@@ -125,7 +135,7 @@ export default function ChicagoPanel() {
             const isActive = activePage === p.id;
             return (
               <button
-                key={p.id}
+                key={p.label}
                 onClick={() => openPage(p.id)}
                 className="flex items-center gap-2 px-2.5 py-2 rounded text-[10px] font-mono text-left transition-all"
                 style={{
@@ -154,6 +164,11 @@ export default function ChicagoPanel() {
             "Events on tonight",
             "Bars open now",
             "Best neighborhoods to visit",
+            "What to explore this weekend",
+            "Chicago beach conditions",
+            "Chicago news today",
+            "Health resources in Chicago",
+            "File a 311 report",
           ].map((q) => (
             <button
               key={q}
