@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import VoiceOrb from "./VoiceOrb";
@@ -63,20 +63,35 @@ export default function Dashboard() {
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
+  // Pre-opened blank tab from the user-gesture handler.
+  // Chrome blocks window.open() from async speech callbacks, so we open
+  // a blank tab during the Space/click gesture and navigate it once we
+  // know the target URL.
+  const pendingWindowRef = useRef<Window | null>(null);
+
+  function preOpenTab() {
+    try {
+      pendingWindowRef.current = window.open("about:blank", "_blank");
+    } catch {
+      pendingWindowRef.current = null;
+    }
+  }
+
   // Fires BEFORE the server responds — opens panels and external apps instantly
   const handleOptimisticActions = useCallback((text: string) => {
     const t = text.toLowerCase();
 
+    let externalUrl: string | null = null;
+
     if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
       setOpenPanel("meridian");
-      // Always open the MERIDIAN app when the agent is invoked
-      window.open("http://localhost:8765", "_blank", "noopener,noreferrer");
+      externalUrl = "http://localhost:8765";
     } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
       setOpenPanel("chicago");
-      window.open("http://localhost:5173", "_blank", "noopener,noreferrer");
+      externalUrl = "http://localhost:5173";
     } else if (/\bflexport\b|\bpipeline\b|\bprospects?\b|\bvessel\b|\bhot leads?\b/.test(t)) {
       setOpenPanel("flexport");
-      window.open("http://localhost:5174", "_blank", "noopener,noreferrer");
+      externalUrl = "http://localhost:5174";
     } else if (/\bhermes\b|\bemail\b|\bmail\b|\binbox\b|\bslack\b/.test(t)) {
       setOpenPanel("hermes");
     } else if (/\bathena\b|\bgithub\b|\bcode\b|\bpull request\b|\bpr\b/.test(t)) {
@@ -89,6 +104,23 @@ export default function Dashboard() {
       setOpenPanel("ares");
     } else if (/\bhera\b|\bnotes?\b|\bmemory\b|\bremember\b/.test(t)) {
       setOpenPanel("hera");
+    }
+
+    if (externalUrl) {
+      if (pendingWindowRef.current && !pendingWindowRef.current.closed) {
+        // Navigate the pre-opened tab — works because it was opened during a user gesture
+        pendingWindowRef.current.location.href = externalUrl;
+      } else {
+        // Fallback (e.g. double-clap trigger): try a direct open
+        window.open(externalUrl, "_blank");
+      }
+      pendingWindowRef.current = null;
+    } else {
+      // No external app — close the blank tab we speculatively opened
+      if (pendingWindowRef.current && !pendingWindowRef.current.closed) {
+        pendingWindowRef.current.close();
+      }
+      pendingWindowRef.current = null;
     }
   }, []);
 
@@ -137,6 +169,9 @@ export default function Dashboard() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && e.target === document.body) {
         e.preventDefault();
+        // Pre-open a blank tab while we still have the user gesture token.
+        // handleOptimisticActions will navigate it once the transcript is known.
+        if (!isListening) preOpenTab();
         toggleListening();
       }
       if (e.key === "Escape") {
@@ -146,7 +181,7 @@ export default function Dashboard() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleListening]);
+  }, [toggleListening, isListening]);
 
   const [replayEntry, setReplayEntry] = useState<ConversationEntry | null>(null);
 
@@ -225,7 +260,7 @@ export default function Dashboard() {
 
           <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-hidden">
             <motion.div className="py-6" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <VoiceOrb isListening={isListening} isSpeaking={isSpeaking} isProcessing={isProcessing} onClick={() => { unlockAudio(); toggleListening(); }} />
+              <VoiceOrb isListening={isListening} isSpeaking={isSpeaking} isProcessing={isProcessing} onClick={() => { unlockAudio(); if (!isListening) preOpenTab(); toggleListening(); }} />
             </motion.div>
 
             <motion.div className="w-full max-w-2xl flex-1 overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
