@@ -99,15 +99,15 @@ async function handleAgentRequest(
 
   if (intent.startsWith("navigate:")) {
     const target = intent.replace("navigate:", "");
-    // External app agents must still run their logic — they control live apps via bridge/URL
-    const EXTERNAL_AGENTS = new Set(["meridian", "chicago", "flexport"]);
-    if (!EXTERNAL_AGENTS.has(agent)) {
-      const label = target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`;
-      const reply = `Opening ${label}.`;
-      logEvent(supabase, sessionId, agent, "complete", reply);
-      return reply;
-    }
-    // Fall through — let the agent run so it can open the app and act on it
+    const EXTERNAL_LABELS: Record<string, string> = {
+      meridian: "Meridian dashboard",
+      chicago: "Chicago Explorer",
+      flexport: "Flexport dashboard",
+    };
+    const label = EXTERNAL_LABELS[target] ?? (target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`);
+    const reply = `Opening ${label}.`;
+    logEvent(supabase, sessionId, agent, "complete", reply);
+    return reply;
   }
 
   if (agent === "zeus") {

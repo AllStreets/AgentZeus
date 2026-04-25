@@ -141,6 +141,15 @@ export default function Dashboard() {
           }
         }
         setAgentMessages((prev) => ({ ...prev, [response.agent]: response.response }));
+        // Clear the tile message after 5 s so it doesn't linger
+        setTimeout(() => {
+          setAgentMessages((prev) => {
+            if (prev[response.agent] !== response.response) return prev;
+            const next = { ...prev };
+            delete next[response.agent];
+            return next;
+          });
+        }, 5000);
         setConversationHistory((prev) => [
           ...prev,
           { transcript: text, response: response.response, agent: response.agent },
