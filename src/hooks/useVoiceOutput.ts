@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { audioLevel } from "@/lib/audioLevel";
 
 interface UseVoiceOutputReturn {
   isSpeaking: boolean;
@@ -13,6 +14,26 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const ttsAnalyserRef = useRef<AnalyserNode | null>(null);
+  const ttsRafRef = useRef<number | null>(null);
+
+  // Poll TTS analyser to drive the orb visualizer
+  useEffect(() => {
+    const buf = new Float32Array(256);
+    function tick() {
+      ttsRafRef.current = requestAnimationFrame(tick);
+      const analyser = ttsAnalyserRef.current;
+      if (!analyser) { audioLevel.current = 0; return; }
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      audioLevel.current = Math.sqrt(sum / buf.length);
+    }
+    tick();
+    return () => {
+      if (ttsRafRef.current) cancelAnimationFrame(ttsRafRef.current);
+    };
+  }, []);
 
   // Call this synchronously inside a user gesture (orb tap) to satisfy mobile autoplay policy.
   // AudioContext and HTMLAudioElement share the same permission on Chrome/Safari.
@@ -36,6 +57,8 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
       try { sourceNodeRef.current.stop(); } catch { /* already stopped */ }
       sourceNodeRef.current = null;
     }
+    ttsAnalyserRef.current = null;
+    audioLevel.current = 0;
     setIsSpeaking(false);
   }, []);
 
@@ -71,8 +94,20 @@ export function useVoiceOutput(): UseVoiceOutputReturn {
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.onended = () => setIsSpeaking(false);
+
+      // Tap an analyser so the orb can visualize TTS audio in real-time
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.5;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      ttsAnalyserRef.current = analyser;
+
+      source.onended = () => {
+        ttsAnalyserRef.current = null;
+        audioLevel.current = 0;
+        setIsSpeaking(false);
+      };
       source.start(0);
       sourceNodeRef.current = source;
     } catch (error) {

@@ -9,6 +9,9 @@ import { runHermes } from "@/app/api/agents/hermes/route";
 import { runAthena } from "@/app/api/agents/athena/route";
 import { runApollo } from "@/app/api/agents/apollo/route";
 import { runAres } from "@/app/api/agents/ares/route";
+import { runMeridian } from "@/app/api/agents/meridian/route";
+import { runChicago } from "@/app/api/agents/chicago/route";
+import { runFlexport } from "@/app/api/agents/flexport/route";
 
 export const maxDuration = 30;
 
@@ -19,6 +22,9 @@ const AGENT_DESCRIPTIONS: Record<Exclude<AgentName, "zeus">, string> = {
   artemis: "Tasks & Productivity — todos, habits, goals, task management",
   ares: "System & DevOps — server monitoring, deployments, error logs",
   hera: "Memory & Knowledge — storing/retrieving notes, bookmarks, semantic search",
+  meridian: "Geopolitical Intelligence — globe control, news briefings, conflict analysis, MERIDIAN dashboard",
+  chicago: "City Intelligence — Chicago transit (CTA), weather, events, food, sports, nightlife",
+  flexport: "Sales Intelligence — Flexport prospects, pipeline, trade signals, vessel tracking",
 };
 
 async function classifyIntent(transcript: string): Promise<{ agent: AgentName; intent: string }> {
@@ -45,6 +51,9 @@ Also detect these special intents:
 - Daily briefing: "good morning" / "give me my briefing" / "morning briefing" / "daily briefing" → agent: "zeus", intent: "briefing"
 - Quick task add: "add task [title]" / "remind me to [task]" → agent: "artemis", intent: "quick_task:[title]"
 - Quick note: "remember [content]" / "note that [content]" → agent: "hera", intent: "quick_note:[content]"
+- Meridian globe: "open meridian" / "show the globe" / "geopolitical briefing" / "what's happening in the world" → agent: "meridian", intent: "navigate:meridian" or action
+- Chicago city: "open chicago" / "CTA status" / "what's on tonight in chicago" / "train times" / "chicago weather" → agent: "chicago", intent: "navigate:chicago" or action
+- Flexport sales: "open flexport" / "show my prospects" / "pipeline update" / "who should I call" / "hot leads" → agent: "flexport", intent: "navigate:flexport" or action
 
 Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or navigate:target>" }`,
       },
@@ -90,10 +99,15 @@ async function handleAgentRequest(
 
   if (intent.startsWith("navigate:")) {
     const target = intent.replace("navigate:", "");
-    const label = target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`;
-    const reply = `Opening ${label}.`;
-    logEvent(supabase, sessionId, agent, "complete", reply);
-    return reply;
+    // External app agents must still run their logic — they control live apps via bridge/URL
+    const EXTERNAL_AGENTS = new Set(["meridian", "chicago", "flexport"]);
+    if (!EXTERNAL_AGENTS.has(agent)) {
+      const label = target === "settings" ? "settings" : `${target.charAt(0).toUpperCase() + target.slice(1)}'s panel`;
+      const reply = `Opening ${label}.`;
+      logEvent(supabase, sessionId, agent, "complete", reply);
+      return reply;
+    }
+    // Fall through — let the agent run so it can open the app and act on it
   }
 
   if (agent === "zeus") {
@@ -115,13 +129,16 @@ async function handleAgentRequest(
   // Call agent logic directly — no internal HTTP hop
   const params = { intent, transcript, session_id: sessionId, ...extras };
   switch (agent) {
-    case "artemis": return runArtemis(params);
-    case "hera":    return runHera(params);
-    case "hermes":  return runHermes(params);
-    case "athena":  return runAthena(params);
-    case "apollo":  return runApollo(params);
-    case "ares":    return runAres(params);
-    default:        return "Agent not found.";
+    case "artemis":  return runArtemis(params);
+    case "hera":     return runHera(params);
+    case "hermes":   return runHermes(params);
+    case "athena":   return runAthena(params);
+    case "apollo":   return runApollo(params);
+    case "ares":     return runAres(params);
+    case "meridian": return runMeridian(params);
+    case "chicago":  return runChicago(params);
+    case "flexport": return runFlexport(params);
+    default:         return "Agent not found.";
   }
 }
 

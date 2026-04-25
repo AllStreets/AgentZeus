@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Send, Code, Calendar, Target, Shield, Brain } from "lucide-react";
+import { Zap, Send, Code, Calendar, Target, Shield, Brain, Globe, MapPin, TrendingUp } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   zap: Zap,
@@ -10,6 +10,9 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
   target: Target,
   shield: Shield,
   brain: Brain,
+  globe: Globe,
+  "map-pin": MapPin,
+  "trending-up": TrendingUp,
 };
 
 interface AgentIconProps {
@@ -20,6 +23,6 @@ interface AgentIconProps {
 
 export default function AgentIcon({ icon, size = 18, className }: AgentIconProps) {
   const Icon = iconMap[icon];
-  if (!Icon) return <span className={className}>{icon}</span>;
+  if (!Icon) return null;
   return <Icon size={size} className={className} />;
 }

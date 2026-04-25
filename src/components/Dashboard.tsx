@@ -16,6 +16,9 @@ import HermesPanel from "./panels/HermesPanel";
 import AthenaPanel from "./panels/AthenaPanel";
 import ApolloPanel from "./panels/ApolloPanel";
 import AresPanel from "./panels/AresPanel";
+import MeridianPanel from "./panels/MeridianPanel";
+import ChicagoPanel from "./panels/ChicagoPanel";
+import FlexportPanel from "./panels/FlexportPanel";
 import SettingsPanel from "./SettingsPanel";
 import AmbientToast from "./AmbientToast";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
@@ -24,6 +27,7 @@ import { useZeus } from "@/hooks/useZeus";
 import { useAgentEvents } from "@/hooks/useAgentEvents";
 import { useAmbientMonitor } from "@/hooks/useAmbientMonitor";
 import { agents, getAgent } from "@/lib/agents";
+import { agentBus } from "@/lib/agentBus";
 import { AgentEvent, AgentName } from "@/types";
 
 interface ConversationEntry {
@@ -39,6 +43,9 @@ const PANEL_COMPONENTS: Partial<Record<AgentName, React.ComponentType>> = {
   athena: AthenaPanel,
   apollo: ApolloPanel,
   ares: AresPanel,
+  meridian: MeridianPanel,
+  chicago: ChicagoPanel,
+  flexport: FlexportPanel,
 };
 
 export default function Dashboard() {
@@ -56,8 +63,28 @@ export default function Dashboard() {
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
+  // Fires BEFORE the server responds — opens panels and external apps instantly
+  const handleOptimisticActions = useCallback((text: string) => {
+    const t = text.toLowerCase();
+    const wantsOpen = /\bopen\b|\blaunch\b|\bshow me\b/.test(t);
+
+    if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
+      setOpenPanel("meridian");
+      if (wantsOpen) window.open("http://localhost:8080", "_blank", "noopener,noreferrer");
+    } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
+      setOpenPanel("chicago");
+      if (wantsOpen) window.open("http://localhost:5173", "_blank", "noopener,noreferrer");
+    } else if (/\bflexport\b|\bpipeline\b|\bprospects?\b|\bvessel\b|\bhot leads?\b/.test(t)) {
+      setOpenPanel("flexport");
+      if (wantsOpen) window.open("http://localhost:5174", "_blank", "noopener,noreferrer");
+    }
+  }, []);
+
   const handleTranscript = useCallback(
     async (text: string) => {
+      // Act immediately — don't wait for the server
+      handleOptimisticActions(text);
+
       const response = await sendCommand(text);
       if (response) {
         // Handle navigation intents
@@ -74,6 +101,7 @@ export default function Dashboard() {
           ...prev,
           { transcript: text, response: response.response, agent: response.agent },
         ]);
+        agentBus.emit({ agent: response.agent, intent: response.intent, transcript: text, response: response.response });
         speak(response.response);
       }
     },
@@ -199,18 +227,52 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          <motion.div className="px-6 pb-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-            <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-              {displayAgents.map((agent, i) => (
-                <motion.div key={agent.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.05 }}>
-                  <AgentCard
-                    agent={agent}
-                    isActive={currentActiveAgent === agent.name}
-                    lastMessage={agentMessages[agent.name]}
-                    onClick={() => setOpenPanel(agent.name)}
-                  />
-                </motion.div>
-              ))}
+          <motion.div
+            className="px-6 pb-4 flex-shrink-0"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            {/* Section header */}
+            <div className="flex items-center gap-3 mb-3 px-0.5">
+              <div className="flex items-center gap-2">
+                <motion.div
+                  className="w-1.5 h-1.5 rounded-full bg-zeus"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
+                />
+                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">
+                  Agent Array
+                </span>
+              </div>
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.05), transparent)" }} />
+              <span className="text-[9px] font-mono tracking-widest" style={{ color: "rgba(245,158,11,0.5)" }}>
+                {displayAgents.length} ONLINE
+              </span>
+            </div>
+
+            {/* Scrollable grid */}
+            <div
+              className="overflow-y-auto [&::-webkit-scrollbar]:hidden"
+              style={{ maxHeight: 240, scrollbarWidth: "none" }}
+            >
+              <div className="grid grid-cols-3 gap-2 pr-0.5">
+                {displayAgents.map((agent, i) => (
+                  <motion.div
+                    key={agent.name}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 + i * 0.06, duration: 0.4 }}
+                  >
+                    <AgentCard
+                      agent={agent}
+                      isActive={currentActiveAgent === agent.name}
+                      lastMessage={agentMessages[agent.name]}
+                      onClick={() => setOpenPanel(agent.name)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>

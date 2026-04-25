@@ -1,4 +1,4 @@
-export type AgentName = "zeus" | "hermes" | "athena" | "apollo" | "artemis" | "ares" | "hera";
+export type AgentName = "zeus" | "hermes" | "athena" | "apollo" | "artemis" | "ares" | "hera" | "meridian" | "chicago" | "flexport";
 
 export interface AgentEvent {
   id: string;

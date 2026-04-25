@@ -57,6 +57,30 @@ export const agents: AgentInfo[] = [
     color: "#f43f5e",
     icon: "brain",
   },
+  {
+    name: "meridian",
+    displayName: "Meridian",
+    domain: "Geopolitical Intelligence",
+    description: "Globe control, news briefings, conflict analysis",
+    color: "#00d4ff",
+    icon: "globe",
+  },
+  {
+    name: "chicago",
+    displayName: "Chicago",
+    domain: "City Intelligence",
+    description: "Transit, weather, events, food, sports",
+    color: "#3b82f6",
+    icon: "map-pin",
+  },
+  {
+    name: "flexport",
+    displayName: "Flexport",
+    domain: "Sales Intelligence",
+    description: "Prospects, pipeline, trade signals, vessels",
+    color: "#f59e0b",
+    icon: "trending-up",
+  },
 ];
 
 export function getAgent(name: string): AgentInfo | undefined {
