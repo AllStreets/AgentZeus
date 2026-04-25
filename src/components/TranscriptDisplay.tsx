@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { getAgent } from "@/lib/agents";
-import AgentIcon from "./AgentIcon";
+import AgentMiniIcon from "./AgentMiniIcon";
 
 interface ConversationEntry {
   transcript: string;
@@ -71,7 +71,7 @@ export default function TranscriptDisplay({
                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                 style={{ backgroundColor: `${histAgent?.color || "#3b82f6"}15`, color: histAgent?.color || "#3b82f6" }}
               >
-                {histAgent ? <AgentIcon icon={histAgent.icon} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
+                {histAgent ? <AgentMiniIcon name={histAgent.name} color={histAgent.color} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
               </div>
               <p className="text-sm text-slate-400 leading-relaxed">{entry.response}</p>
             </div>
@@ -110,7 +110,7 @@ export default function TranscriptDisplay({
               className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5"
               style={{ backgroundColor: `${agent?.color || "#3b82f6"}15`, color: agent?.color || "#3b82f6" }}
             >
-              {agent ? <AgentIcon icon={agent.icon} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
+              {agent ? <AgentMiniIcon name={agent.name} color={agent.color} size={12} /> : <span className="text-[10px] font-mono">Z</span>}
             </div>
             <div>
               <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: agent?.color || "#3b82f6" }}>

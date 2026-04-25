@@ -4,6 +4,7 @@ import { useAnimationFrame, motion, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 import { AgentInfo, AgentName } from "@/types";
 import VoiceOrb from "./VoiceOrb";
+import MeridianGlobe from "./MeridianGlobe";
 
 interface ConstellationProps {
   agents: AgentInfo[];
@@ -163,60 +164,7 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
     // ── Meridian: globe with realistic continent silhouettes and location pin ─
     case "meridian":
       return (
-        <svg viewBox="0 0 80 80" width={84} height={84}>
-          <defs>
-            <clipPath id="globe-clip"><circle cx="40" cy="40" r="34" /></clipPath>
-          </defs>
-          <circle cx="40" cy="40" r="34" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          <g clipPath="url(#globe-clip)">
-            {/* Subtle grid */}
-            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.15} />
-            <path d="M 8 28 Q 40 20 72 28" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.12} fill="none" />
-            <path d="M 8 52 Q 40 60 72 52" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.12} fill="none" />
-            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.15} fill="none" />
-
-            {/* North America — Alaska hook, wide Canada, Great Lakes indent, Florida peninsula, Mexico tapering to Central America isthmus */}
-            <path d="M 8 22 C 9 20, 11 18, 13 19 C 14 17, 16 16, 18 17 L 20 16 L 23 17 L 26 18 L 28 17 L 29 19 L 28 21 L 30 22 L 29 24 L 27 23 L 25 24 C 26 26, 27 27, 26 29 L 24 28 L 23 30 L 25 32 L 24 34 L 22 33 L 20 35 L 21 37 C 22 38, 23 39, 22 40 L 20 39 L 19 41 L 20 42 L 18 42 L 17 40 L 15 38 L 13 36 L 11 32 L 10 28 L 9 25 Z"
-              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.45} strokeLinejoin="round" />
-
-            {/* South America — broad Brazil shoulder, Amazon coast bulge, tapers through Argentina to Tierra del Fuego */}
-            <path d="M 20 44 C 22 43, 24 42, 26 43 C 27 43, 28 44, 29 46 C 30 47, 30 49, 29 51 L 28 48 L 29 50 C 29 53, 28 55, 27 57 C 26 59, 25 61, 24 63 C 23 64, 22 65, 21 66 C 20 66, 19 65, 19 63 L 18 60 L 17 56 L 16 52 L 17 48 L 18 46 L 19 45 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
-
-            {/* Europe — Scandinavian peninsula, British Isles dot, Iberian peninsula, Italian boot, Balkans */}
-            <path d="M 35 16 C 36 15, 37 14, 39 15 L 41 14 L 43 15 C 44 15, 45 16, 44 18 L 46 18 C 47 19, 47 21, 46 22 L 44 21 L 43 23 C 44 24, 45 25, 44 27 L 42 26 C 41 27, 40 28, 39 29 L 37 28 C 37 29, 38 30, 37 31 L 38 32 L 37 34 C 36 34, 35 33, 34 32 L 34 30 L 33 27 L 34 24 L 33 21 L 34 19 Z"
-              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.45} strokeLinejoin="round" />
-            {/* British Isles */}
-            <ellipse cx="32" cy="20" rx="2" ry="3" fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.35} />
-
-            {/* Africa — Mediterranean coast, West African bulge, Horn of East Africa, Great Rift narrowing, Cape */}
-            <path d="M 33 34 C 35 33, 37 34, 39 33 L 42 34 C 44 34, 46 35, 48 36 L 50 37 C 51 38, 51 40, 50 41 L 51 43 C 50 44, 49 43, 48 44 L 47 42 C 46 43, 46 45, 47 47 C 47 49, 46 51, 45 53 C 44 55, 43 57, 42 58 C 41 60, 40 61, 39 61 C 38 61, 37 60, 37 58 L 36 55 L 35 52 L 34 48 L 33 44 L 32 40 L 32 37 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
-            {/* Madagascar */}
-            <path d="M 50 52 L 51 50 L 52 52 L 51 55 Z" fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.3" strokeOpacity={so * 0.3} />
-
-            {/* Asia — Middle East, Central Asia plateau, Siberia, Korea/Japan peninsula, Kamchatka */}
-            <path d="M 48 20 C 50 18, 53 16, 56 15 L 59 14 C 62 14, 65 16, 67 18 C 69 20, 70 22, 69 25 L 71 26 C 71 28, 70 30, 68 30 L 66 29 C 65 30, 64 32, 65 34 L 63 35 C 61 34, 59 35, 58 34 L 56 36 C 54 35, 52 34, 51 33 L 49 34 L 48 32 L 47 29 L 48 26 L 47 23 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
-            {/* India — triangular peninsula */}
-            <path d="M 53 36 C 55 36, 56 37, 57 39 C 57 41, 56 43, 54 45 C 53 44, 52 42, 51 40 C 51 38, 52 37, 53 36 Z"
-              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.35} />
-            {/* Southeast Asia + Indonesia archipelago */}
-            <path d="M 60 36 C 62 37, 63 36, 64 38 L 66 37 C 67 38, 67 40, 66 41 L 63 40 L 61 39 Z"
-              fill={color} fillOpacity={fo * 1.5} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.3} />
-            {/* Japan arc */}
-            <path d="M 68 24 C 69 22, 71 23, 70 26 C 69 28, 68 27, 68 24 Z"
-              fill={color} fillOpacity={fo * 1.4} stroke={color} strokeWidth="0.3" strokeOpacity={so * 0.3} />
-
-            {/* Australia — distinctive shape with Gulf of Carpentaria indent */}
-            <path d="M 60 49 C 63 47, 66 47, 69 49 C 71 50, 72 53, 71 55 C 70 57, 68 58, 66 58 C 64 58, 62 57, 60 55 C 59 53, 58 51, 60 49 Z"
-              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
-          </g>
-          {/* Location pin on Europe */}
-          <circle cx="40" cy="24" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
-          <circle cx="40" cy="24" r="1.2" fill={color} fillOpacity={dot} />
-          <path d="M 40 27 L 38 31 L 42 31 Z" fill={color} fillOpacity={dot * 0.7} />
-        </svg>
+        <MeridianGlobe size={84} color={color} strokeOpacity={so} fillOpacity={fo} />
       );
 
     // ── Chicago: city skyline silhouette ─────────────────────────────────────

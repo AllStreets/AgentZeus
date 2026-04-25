@@ -3,7 +3,7 @@
 import { motion, useAnimationFrame } from "framer-motion";
 import { useRef, useState } from "react";
 import { AgentInfo, AgentName } from "@/types";
-import AgentIcon from "./AgentIcon";
+import AgentMiniIcon from "./AgentMiniIcon";
 
 interface Props {
   agents: AgentInfo[];
@@ -190,7 +190,7 @@ function ZeusNucleus({
           className="relative z-10 flex"
           style={{ color: agent.color }}
         >
-          <AgentIcon icon={agent.icon} size={20} />
+          <AgentMiniIcon name={agent.name} color={agent.color} size={20} />
         </span>
       </div>
 
@@ -285,7 +285,7 @@ function AgentNode({
           transition={{ duration: 0.25 }}
           style={{ color: `${agent.color}55` }}
         >
-          <AgentIcon icon={agent.icon} size={13} />
+          <AgentMiniIcon name={agent.name} color={agent.color} size={13} />
         </motion.span>
       </div>
 

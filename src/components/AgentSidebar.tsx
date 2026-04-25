@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { agents } from "@/lib/agents";
-import AgentIcon from "./AgentIcon";
+import AgentMiniIcon from "./AgentMiniIcon";
 import { AgentName } from "@/types";
 
 interface AgentSidebarProps {
@@ -50,7 +50,7 @@ export default function AgentSidebar({ activeAgent, agentMessages, onSelectAgent
                 color: isActive ? agent.color : "#64748b",
               }}
             >
-              <AgentIcon icon={agent.icon} size={14} />
+              <AgentMiniIcon name={agent.name} color={isActive ? agent.color : "#64748b"} size={14} />
             </div>
 
             <div className="flex-1 min-w-0">

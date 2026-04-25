@@ -276,6 +276,7 @@ export default function Dashboard() {
               isProcessing={isProcessing}
               activeAgent={activeAgent}
               lastIntent={lastResponse?.intent || null}
+              onSubmit={handleTranscript}
             />
           </motion.div>
         </div>

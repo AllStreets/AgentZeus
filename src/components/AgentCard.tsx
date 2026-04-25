@@ -3,7 +3,7 @@
 import { motion, useAnimationFrame } from "framer-motion";
 import { useRef, useState } from "react";
 import { AgentInfo } from "@/types";
-import AgentIcon from "./AgentIcon";
+import AgentMiniIcon from "./AgentMiniIcon";
 
 interface AgentCardProps {
   agent: AgentInfo;
@@ -165,7 +165,7 @@ export default function AgentCard({ agent, isActive, lastMessage, onClick }: Age
                 boxShadow: isActive ? `0 0 10px ${agent.color}30` : "none",
               }}
             >
-              <AgentIcon icon={agent.icon} size={14} />
+              <AgentMiniIcon name={agent.name} color={agent.color} size={14} />
             </div>
           </div>
 

@@ -50,7 +50,7 @@ export default function AthenaPanel() {
   const [data, setData] = useState<GitHubData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"prs" | "issues" | "repos" | "commits">("prs");
+  const [tab, setTab] = useState<"prs" | "issues" | "repos" | "commits">("repos");
   const [commits, setCommits] = useState<Commit[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [newIssueTitle, setNewIssueTitle] = useState("");
@@ -193,10 +193,10 @@ export default function AthenaPanel() {
       {data && (
         <div className="grid grid-cols-4 gap-1.5">
           {[
-            { label: "PRs", count: data.prs.length, tab: "prs" as const, color: "#8b5cf6" },
-            { label: "Issues", count: data.issues.length, tab: "issues" as const, color: "#ef4444" },
             { label: "Repos", count: data.repos.length, tab: "repos" as const, color: "#3b82f6" },
             { label: "Commits", count: commits.length || "→", tab: "commits" as const, color: "#10b981" },
+            { label: "Issues", count: data.issues.length, tab: "issues" as const, color: "#ef4444" },
+            { label: "PRs", count: data.prs.length, tab: "prs" as const, color: "#8b5cf6" },
           ].map(({ label, count, tab: t, color }) => (
             <button
               key={t}
@@ -224,7 +224,7 @@ export default function AthenaPanel() {
           <motion.div key={tab} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-1.5">
             {tab === "prs" && (
               data.prs.length === 0 ? (
-                <p className="text-xs text-slate-600 text-center py-6">No open PRs assigned to you</p>
+                <p className="text-xs text-slate-600 text-center py-6">No open PRs by you</p>
               ) : data.prs.map((pr) => (
                 <a key={pr.number} href={pr.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-start gap-3 p-3 rounded-lg group transition-colors hover:bg-white/[0.03]"

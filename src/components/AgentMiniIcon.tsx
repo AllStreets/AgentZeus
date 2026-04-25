@@ -1,0 +1,45 @@
+"use client";
+
+import MeridianGlobe from "./MeridianGlobe";
+
+/**
+ * Shared mini SVG icons for each agent — used in both the sidebar and panel headers.
+ * These match the constellation AgentArt style at small scale.
+ */
+export default function AgentMiniIcon({ name, color, size = 18 }: { name: string; color: string; size?: number }) {
+  // Scale factor relative to the default 18px base
+  const sc = size / 18;
+  const s = { stroke: color, fill: "none", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const f = { fill: color, fillOpacity: 0.2 };
+
+  switch (name) {
+    case "zeus":
+      return <svg viewBox="0 0 60 60" width={size} height={size}><circle cx="30" cy="30" r="26" {...f} stroke={color} strokeWidth="2.5" /><path d="M 36 12 L 22 32 L 32 32 L 24 48 L 40 26 L 30 26 Z" fill={color} fillOpacity="0.6" /></svg>;
+    case "hermes":
+      return <svg viewBox="0 0 80 68" width={size} height={size * 68/80}><rect x="6" y="14" width="68" height="46" rx="3" {...f} stroke={color} strokeWidth="2.5" /><path d="M 6 14 L 40 44 L 74 14" stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round" /></svg>;
+    case "athena":
+      return <svg viewBox="0 0 80 76" width={size} height={size * 76/80}><polygon points="40,4 72,22 72,54 40,72 8,54 8,22" {...f} stroke={color} strokeWidth="2.5" /><polyline points="28,30 19,38 28,46" {...s} strokeWidth="3.5" /><line x1="37" y1="28" x2="43" y2="48" stroke={color} strokeWidth="3.5" /><polyline points="52,30 61,38 52,46" {...s} strokeWidth="3.5" /></svg>;
+    case "apollo":
+      return <svg viewBox="0 0 76 76" width={size} height={size}><circle cx="38" cy="38" r="32" {...f} stroke={color} strokeWidth="2.5" /><line x1="9" y1="26" x2="67" y2="26" stroke={color} strokeWidth="2" strokeOpacity="0.6" /><line x1="24" y1="10" x2="24" y2="22" stroke={color} strokeWidth="3" /><line x1="52" y1="10" x2="52" y2="22" stroke={color} strokeWidth="3" />{[18,30,42,54].map(cx => [32,44,56].map(cy => <rect key={`${cx}-${cy}`} x={cx-2} y={cy-2} width={4} height={4} rx={1} fill={color} fillOpacity={0.5} />))}</svg>;
+    case "artemis":
+      return <svg viewBox="0 0 78 74" width={size} height={size * 74/78}><polygon points="39,4 74,70 4,70" {...f} stroke={color} strokeWidth="2.5" /><circle cx="39" cy="52" r="11" stroke={color} strokeWidth="2" fill="none" /><circle cx="39" cy="52" r="4" fill={color} fillOpacity="0.6" /></svg>;
+    case "ares":
+      return <svg viewBox="0 0 72 80" width={size * 72/80} height={size}><path d="M 36 4 L 66 16 L 66 46 Q 66 66 36 76 Q 6 66 6 46 L 6 16 Z" {...f} stroke={color} strokeWidth="2.5" /><path d="M 44 20 L 30 42 L 39 42 L 28 62 L 46 36 L 36 36 Z" fill={color} fillOpacity="0.6" /></svg>;
+    case "hera":
+      return <svg viewBox="0 0 80 80" width={size} height={size}><rect x="16" y="16" width="48" height="48" rx="4" {...f} stroke={color} strokeWidth="2.5" /><rect x="26" y="26" width="28" height="28" rx="2" stroke={color} strokeWidth="1.5" strokeOpacity="0.6" fill={color} fillOpacity="0.3" /><circle cx="40" cy="40" r="3" fill={color} fillOpacity="0.6" />{[26,34,42,50].map(x => <line key={`t${x}`} x1={x} y1="16" x2={x} y2="6" stroke={color} strokeWidth="2" strokeOpacity="0.6" strokeLinecap="round" />)}{[26,34,42,50].map(x => <line key={`b${x}`} x1={x} y1="64" x2={x} y2="74" stroke={color} strokeWidth="2" strokeOpacity="0.6" strokeLinecap="round" />)}{[26,34,42,50].map(y => <line key={`l${y}`} x1="16" y1={y} x2="6" y2={y} stroke={color} strokeWidth="2" strokeOpacity="0.6" strokeLinecap="round" />)}{[26,34,42,50].map(y => <line key={`r${y}`} x1="64" y1={y} x2="74" y2={y} stroke={color} strokeWidth="2" strokeOpacity="0.6" strokeLinecap="round" />)}</svg>;
+    case "meridian":
+      return <MeridianGlobe size={size} color={color} />;
+    case "chicago":
+      return <svg viewBox="0 0 84 72" width={size} height={size * 72/84}><line x1="2" y1="62" x2="82" y2="62" stroke={color} strokeWidth="2.5" /><rect x="26" y="18" width="14" height="44" {...f} stroke={color} strokeWidth="2" rx="1"/><rect x="15" y="36" width="9" height="26" {...f} stroke={color} strokeWidth="1.5" rx="1"/><rect x="42" y="38" width="11" height="24" {...f} stroke={color} strokeWidth="1.5" rx="1"/><rect x="55" y="28" width="9" height="34" {...f} stroke={color} strokeWidth="1.5" rx="1"/></svg>;
+    case "flexport":
+      return <svg viewBox="0 0 88 72" width={size} height={size * 72/88}><path d="M 4 46 L 4 54 Q 4 58 10 58 L 70 58 L 80 50 L 80 46 Z" {...f} stroke={color} strokeWidth="2.5" /><rect x="10" y="32" width="18" height="14" rx="1" {...f} stroke={color} strokeWidth="1.5" /><rect x="12" y="34" width="14" height="5" rx="0.5" fill={color} fillOpacity="0.5" /><rect x="31" y="38" width="14" height="8" rx="1" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1.5" /><rect x="47" y="38" width="14" height="8" rx="1" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1.5" /><rect x="63" y="38" width="10" height="8" rx="1" fill={color} fillOpacity="0.25" stroke={color} strokeWidth="1.5" /><path d="M 2 64 Q 13 59 24 64 Q 35 69 46 64 Q 57 59 68 64 Q 79 69 88 64" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" /></svg>;
+    case "clio":
+      return <svg viewBox="0 0 76 80" width={size * 76/80} height={size}><rect x="8" y="10" width="44" height="58" rx="3" {...f} stroke={color} strokeWidth="2.5" /><line x1="14" y1="30" x2="44" y2="30" stroke={color} strokeWidth="2.5" strokeLinecap="round" /><line x1="14" y1="40" x2="44" y2="40" stroke={color} strokeWidth="2.5" strokeLinecap="round" /><line x1="14" y1="50" x2="38" y2="50" stroke={color} strokeWidth="2.5" strokeLinecap="round" /><line x1="58" y1="8" x2="46" y2="72" stroke={color} strokeWidth="3.5" strokeLinecap="round" /></svg>;
+    case "poseidon":
+      return <svg viewBox="0 0 80 80" width={size} height={size}><circle cx="22" cy="24" r="2.5" fill={color} fillOpacity="0.5" /><circle cx="56" cy="18" r="2.5" fill={color} fillOpacity="0.5" /><circle cx="16" cy="52" r="2.5" fill={color} fillOpacity="0.5" /><circle cx="48" cy="48" r="2.5" fill={color} fillOpacity="0.5" /><circle cx="64" cy="40" r="2.5" fill={color} fillOpacity="0.5" /><line x1="22" y1="24" x2="56" y2="18" stroke={color} strokeWidth="0.7" strokeOpacity="0.3" /><line x1="22" y1="24" x2="16" y2="52" stroke={color} strokeWidth="0.7" strokeOpacity="0.3" /><line x1="56" y1="18" x2="64" y2="40" stroke={color} strokeWidth="0.7" strokeOpacity="0.3" /><line x1="48" y1="48" x2="64" y2="40" stroke={color} strokeWidth="0.7" strokeOpacity="0.3" /><line x1="48" y1="48" x2="16" y2="52" stroke={color} strokeWidth="0.7" strokeOpacity="0.3" /><circle cx="42" cy="38" r="18" {...f} stroke={color} strokeWidth="2.5" /><line x1="55" y1="51" x2="70" y2="70" stroke={color} strokeWidth="3.5" strokeLinecap="round" /><circle cx="42" cy="38" r="10" stroke={color} strokeWidth="1.5" strokeOpacity="0.4" fill="none" /><path d="M 32 30 Q 36 24 42 26" stroke={color} strokeWidth="1.5" strokeOpacity="0.5" fill="none" strokeLinecap="round" /></svg>;
+    case "iris":
+      return <svg viewBox="0 0 84 68" width={size} height={size * 68/84}><path d="M 4 34 Q 42 4 80 34 Q 42 64 4 34 Z" {...f} stroke={color} strokeWidth="2.5" /><circle cx="42" cy="34" r="14" stroke={color} strokeWidth="2" fill={color} fillOpacity="0.2" /><circle cx="42" cy="34" r="5" fill={color} fillOpacity="0.6" /><circle cx="46" cy="30" r="2.5" fill={color} fillOpacity="0.7" /></svg>;
+    default:
+      return <svg viewBox="0 0 60 60" width={size} height={size}><circle cx="30" cy="30" r="26" {...f} stroke={color} strokeWidth="2.5" /></svg>;
+  }
+}

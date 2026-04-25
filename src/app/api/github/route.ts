@@ -11,6 +11,7 @@ interface GitHubPR {
   repository_url: string;
   created_at: string;
   draft: boolean;
+  user?: { login: string };
 }
 
 interface GitHubIssue {
@@ -33,6 +34,7 @@ interface GitHubRepo {
 async function ghFetch(path: string, token: string, options: { method?: string; body?: string } = {}) {
   const res = await fetch(`https://api.github.com${path}`, {
     method: options.method || "GET",
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
@@ -56,13 +58,14 @@ export async function POST(req: NextRequest) {
       const user: GitHubUser = await ghFetch("/user", token);
       const login = user.login;
 
-      const [prsRaw, issuesRaw, reposRaw] = await Promise.all([
-        ghFetch(`/search/issues?q=is:pr+is:open+author:${login}&per_page=10`, token),
-        ghFetch(`/search/issues?q=is:issue+is:open+author:${login}&per_page=10`, token),
+      const [prsSearchRaw, issuesRaw, reposRaw] = await Promise.all([
+        ghFetch(`/search/issues?q=${encodeURIComponent(`is:pr is:open author:${login}`)}&per_page=20`, token),
+        ghFetch(`/search/issues?q=${encodeURIComponent(`is:issue is:open author:${login}`)}&per_page=10`, token),
         ghFetch(`/user/repos?sort=pushed&per_page=8`, token),
       ]);
 
-      const prs = (prsRaw.items as GitHubPR[]).map((pr) => ({
+      // Search API results (covers all repos including forks/orgs)
+      const searchPrs = (prsSearchRaw.items as GitHubPR[]).map((pr) => ({
         number: pr.number,
         title: pr.title,
         url: pr.html_url,
@@ -70,6 +73,33 @@ export async function POST(req: NextRequest) {
         age: Math.floor((Date.now() - new Date(pr.created_at).getTime()) / 86400000),
         draft: pr.draft,
       }));
+
+      // REST API results (real-time, no indexing delay, but only user's repos)
+      const restPrsByRepo = await Promise.all(
+        (reposRaw as GitHubRepo[]).map(async (repo) => {
+          try {
+            const pulls = await ghFetch(
+              `/repos/${repo.full_name}/pulls?state=open&per_page=10`,
+              token
+            );
+            return (pulls as GitHubPR[]).map((pr) => ({
+              number: pr.number,
+              title: pr.title,
+              url: pr.html_url,
+              repo: repo.full_name,
+              age: Math.floor((Date.now() - new Date(pr.created_at).getTime()) / 86400000),
+              draft: pr.draft,
+            }));
+          } catch { return []; }
+        })
+      );
+
+      // Merge and deduplicate by URL
+      const seen = new Set<string>();
+      const prs = [...restPrsByRepo.flat(), ...searchPrs]
+        .filter((pr) => { if (seen.has(pr.url)) return false; seen.add(pr.url); return true; })
+        .sort((a, b) => a.age - b.age);
+
 
       const issues = (issuesRaw.items as GitHubIssue[])
         .filter((i) => !i.pull_request)
