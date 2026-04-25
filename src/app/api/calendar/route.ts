@@ -29,15 +29,29 @@ export async function GET(req: NextRequest) {
   try {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today.getTime() + 86400000 * (action === "tomorrow" ? 2 : 1));
-    const from = action === "tomorrow" ? new Date(today.getTime() + 86400000) : today;
+
+    let from: Date;
+    let to: Date;
+    let maxResults = "10";
+
+    if (action === "tomorrow") {
+      from = new Date(today.getTime() + 86400000);
+      to = new Date(today.getTime() + 86400000 * 2);
+    } else if (action === "week") {
+      from = today;
+      to = new Date(today.getTime() + 86400000 * 7);
+      maxResults = "50";
+    } else {
+      from = today;
+      to = new Date(today.getTime() + 86400000);
+    }
 
     const params = new URLSearchParams({
       timeMin: from.toISOString(),
-      timeMax: tomorrow.toISOString(),
+      timeMax: to.toISOString(),
       singleEvents: "true",
       orderBy: "startTime",
-      maxResults: "10",
+      maxResults,
     });
 
     const data = await calFetch(`/calendars/primary/events?${params}`, token);
@@ -48,8 +62,17 @@ export async function GET(req: NextRequest) {
       const startDate = start ? new Date(start) : null;
       const endDate = end ? new Date(end) : null;
 
-      // Time remaining until event
       const minutesUntil = startDate ? Math.floor((startDate.getTime() - now.getTime()) / 60000) : null;
+
+      // For week view: label day relative to today
+      let dayLabel: string | null = null;
+      if (startDate) {
+        const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const diffDays = Math.round((startDay.getTime() - today.getTime()) / 86400000);
+        if (diffDays === 0) dayLabel = "Today";
+        else if (diffDays === 1) dayLabel = "Tomorrow";
+        else dayLabel = startDate.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+      }
 
       return {
         id: e.id,
@@ -61,6 +84,7 @@ export async function GET(req: NextRequest) {
         location: e.location || null,
         url: e.htmlLink,
         minutesUntil,
+        dayLabel,
         isNow: minutesUntil !== null && minutesUntil <= 0 && endDate ? endDate.getTime() > now.getTime() : false,
       };
     });

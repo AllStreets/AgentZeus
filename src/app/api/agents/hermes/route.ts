@@ -57,7 +57,7 @@ ${gmailSummary}
 
 ${slack_webhook ? "Slack webhook is connected — you can send Slack messages." : "Slack is not connected."}
 
-If the user wants to draft a reply, use the exact ReplyTo address from the email list above as the "to" field — never construct or guess an email address.
+You can draft emails to any address the user specifies — new emails, replies to anyone, or follow-ups. If the user mentions replying to a recent email, use the ReplyTo address from the list above. If the user provides an email address explicitly, use it exactly as given. If the user mentions a name that matches a sender in the list, use that sender's address.
 If the user wants to send a Slack message, include a send_slack action.
 
 Respond with JSON:
@@ -65,8 +65,8 @@ Respond with JSON:
   "response": "<spoken response — concise, under 3 sentences>",
   "actions": [
     {
-      "type": "draft_reply" | "send_slack",
-      "data": { "to"?: "email", "subject"?: "Re: subject", "body"?: "email body", "message"?: "slack text" }
+      "type": "draft_email" | "send_slack",
+      "data": { "to"?: "email", "subject"?: "subject", "body"?: "email body", "message"?: "slack text" }
     }
   ]
 }`,
@@ -78,7 +78,7 @@ Respond with JSON:
   const content = JSON.parse(response.choices[0].message.content!);
 
   for (const action of content.actions || []) {
-    if (action.type === "draft_reply" && action.data?.body) {
+    if (action.type === "draft_email" && action.data?.body) {
       const gmailToken = await getGoogleToken("gmail");
       if (gmailToken) {
         const draftId = await createGmailDraft(gmailToken, action.data.to || "", action.data.subject || "Re:", action.data.body);

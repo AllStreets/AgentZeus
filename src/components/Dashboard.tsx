@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Zap, ChevronLeft, ChevronRight } from "lucide-react";
-import VoiceOrb from "./VoiceOrb";
-import TranscriptDisplay from "./TranscriptDisplay";
-import AgentCard from "./AgentCard";
+import AgentConstellation from "./AgentConstellation";
 import ActivityFeed from "./ActivityFeed";
 import AgentSidebar from "./AgentSidebar";
 import CommandBar from "./CommandBar";
@@ -55,20 +53,17 @@ export default function Dashboard() {
   const [selectedAgent, setSelectedAgent] = useState<AgentName | null>(null);
   const [openPanel, setOpenPanel] = useState<AgentName | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [leftOpen, setLeftOpen] = useState(true);
-  const [rightOpen, setRightOpen] = useState(true);
+  // Sidebars start collapsed — constellation fills the full screen by default
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
 
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
   const { isSpeaking, speak, unlockAudio } = useVoiceOutput();
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
-  // Fires BEFORE the server responds — opens panels and external apps instantly.
-  // Note: Chrome blocks window.open() from speech-recognition callbacks (non-gesture).
-  // Allow popups for localhost in Chrome settings once, and this works automatically.
   const handleOptimisticActions = useCallback((text: string) => {
     const t = text.toLowerCase();
-
     if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
       setOpenPanel("meridian");
       window.open("http://localhost:8765", "_blank");
@@ -95,22 +90,15 @@ export default function Dashboard() {
 
   const handleTranscript = useCallback(
     async (text: string) => {
-      // Act immediately — don't wait for the server
       handleOptimisticActions(text);
-
       const response = await sendCommand(text);
       if (response) {
-        // Handle navigation intents
         if (response.intent?.startsWith("navigate:")) {
           const target = response.intent.replace("navigate:", "");
-          if (target === "settings") {
-            setSettingsOpen(true);
-          } else {
-            setOpenPanel(target as AgentName);
-          }
+          if (target === "settings") setSettingsOpen(true);
+          else setOpenPanel(target as AgentName);
         }
         setAgentMessages((prev) => ({ ...prev, [response.agent]: response.response }));
-        // Clear the tile message after 5 s so it doesn't linger
         setTimeout(() => {
           setAgentMessages((prev) => {
             if (prev[response.agent] !== response.response) return prev;
@@ -162,9 +150,9 @@ export default function Dashboard() {
 
   function handleReplay(entry: ConversationEntry) {
     setReplayEntry(entry);
-    // Clear after 100ms so TranscriptDisplay re-animates
     setTimeout(() => setReplayEntry(null), 100);
     setTimeout(() => setReplayEntry(entry), 150);
+    speak(entry.response);
   }
 
   const displayAgents = agents.filter((a) => a.name !== "zeus");
@@ -173,16 +161,40 @@ export default function Dashboard() {
   const PanelContent = openPanel ? PANEL_COMPONENTS[openPanel] : null;
   const displayResponse = replayEntry ? replayEntry.response : (lastResponse?.response || null);
   const displayAgent = replayEntry ? replayEntry.agent as AgentName : activeAgent;
+  const responseAgent = displayAgent ? getAgent(displayAgent) ?? null : null;
 
   return (
     <main className="h-screen grid-bg scan-line relative overflow-hidden">
-      <div className="flex h-full">
+
+      {/* ── Layer 0: Full-screen constellation ── */}
+      <div className="absolute inset-0" style={{ zIndex: 0 }}>
+        <AgentConstellation
+          agents={displayAgents}
+          activeAgent={currentActiveAgent}
+          openPanel={openPanel}
+          agentMessages={agentMessages}
+          onSelectAgent={(name) => setOpenPanel(name)}
+          isListening={isListening}
+          isSpeaking={isSpeaking}
+          isProcessing={isProcessing}
+          onOrbClick={() => { unlockAudio(); toggleListening(); }}
+          response={displayResponse}
+          responseAgent={responseAgent}
+          transcript={replayEntry ? replayEntry.transcript : transcript}
+          interimTranscript={replayEntry ? "" : interimTranscript}
+        />
+      </div>
+
+      {/* ── Layer 10: Sidebars + command bar overlay ── */}
+      <div className="flex h-full" style={{ position: "relative", zIndex: 10, pointerEvents: "none" }}>
+
         {/* Left Sidebar */}
-        <div className="relative flex-shrink-0 flex">
+        <div className="flex-shrink-0 flex" style={{ pointerEvents: "auto" }}>
           <motion.div
             className="border-r border-white/[0.03] flex flex-col overflow-hidden"
-            initial={{ width: 224, opacity: 0, x: -20 }}
-            animate={{ width: leftOpen ? 224 : 0, opacity: 1, x: 0 }}
+            style={{ background: "rgba(6,11,24,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: leftOpen ? 224 : 0, opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <div className="w-56 flex flex-col h-full">
@@ -199,7 +211,6 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-
               <div className="flex-1 overflow-y-auto py-2">
                 <AgentSidebar
                   activeAgent={currentActiveAgent}
@@ -207,7 +218,6 @@ export default function Dashboard() {
                   onSelectAgent={(name) => setOpenPanel(name)}
                 />
               </div>
-
               <div className="px-4 py-3 border-t border-white/[0.03]">
                 <button
                   onClick={() => setSettingsOpen(true)}
@@ -219,116 +229,70 @@ export default function Dashboard() {
               </div>
             </div>
           </motion.div>
-          <button
-            onClick={() => setLeftOpen((o) => !o)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all"
-          >
-            {leftOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-          </button>
+          {/* Toggle button — always-visible column */}
+          <div className="flex items-center justify-center w-6 flex-shrink-0">
+            <button
+              onClick={() => setLeftOpen((o) => !o)}
+              className="w-6 h-6 rounded-full border flex items-center justify-center text-slate-500 hover:text-white transition-all"
+              style={{ background: "rgba(6,11,24,0.9)", borderColor: "rgba(255,255,255,0.06)" }}
+            >
+              {leftOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+            </button>
+          </div>
         </div>
 
-        {/* Center */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <motion.div className="px-6 py-3" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-            <CommandBar isProcessing={isProcessing} activeAgent={activeAgent} lastIntent={lastResponse?.intent || null} />
-          </motion.div>
-
-          <div className="flex-1 flex flex-col items-center px-6 pb-6 overflow-hidden">
-            <motion.div className="py-6" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <VoiceOrb isListening={isListening} isSpeaking={isSpeaking} isProcessing={isProcessing} onClick={() => { unlockAudio(); toggleListening(); }} />
-            </motion.div>
-
-            <motion.div className="w-full max-w-2xl flex-1 overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <TranscriptDisplay
-                transcript={replayEntry ? replayEntry.transcript : transcript}
-                interimTranscript={replayEntry ? "" : interimTranscript}
-                response={displayResponse}
-                activeAgent={displayAgent}
-                history={conversationHistory}
-              />
-            </motion.div>
-          </div>
-
+        {/* Center: command bar only (transparent) */}
+        <div className="flex-1 flex flex-col min-w-0" style={{ pointerEvents: "none" }}>
           <motion.div
-            className="px-6 pb-4 flex-shrink-0"
-            initial={{ opacity: 0, y: 20 }}
+            className="px-6 py-3"
+            style={{ pointerEvents: "auto" }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
           >
-            {/* Section header */}
-            <div className="flex items-center gap-3 mb-3 px-0.5">
-              <div className="flex items-center gap-2">
-                <motion.div
-                  className="w-1.5 h-1.5 rounded-full bg-zeus"
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity }}
-                />
-                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">
-                  Agent Array
-                </span>
-              </div>
-              <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.05), transparent)" }} />
-              <span className="text-[9px] font-mono tracking-widest" style={{ color: "rgba(245,158,11,0.5)" }}>
-                {displayAgents.length} ONLINE
-              </span>
-            </div>
-
-            {/* Scrollable grid */}
-            <div
-              className="overflow-y-auto [&::-webkit-scrollbar]:hidden"
-              style={{ maxHeight: 240, scrollbarWidth: "none" }}
-            >
-              <div className="grid grid-cols-3 gap-2 pr-0.5">
-                {displayAgents.map((agent, i) => (
-                  <motion.div
-                    key={agent.name}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 + i * 0.06, duration: 0.4 }}
-                  >
-                    <AgentCard
-                      agent={agent}
-                      isActive={currentActiveAgent === agent.name}
-                      lastMessage={agentMessages[agent.name]}
-                      onClick={() => setOpenPanel(agent.name)}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+            <CommandBar
+              isProcessing={isProcessing}
+              activeAgent={activeAgent}
+              lastIntent={lastResponse?.intent || null}
+            />
           </motion.div>
         </div>
 
         {/* Right Sidebar */}
-        <div className="relative flex-shrink-0 flex">
-          <button
-            onClick={() => setRightOpen((o) => !o)}
-            className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/[0.08] transition-all"
-          >
-            {rightOpen ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-          </button>
+        <div className="flex-shrink-0 flex" style={{ pointerEvents: "auto" }}>
+          {/* Toggle button — always-visible column */}
+          <div className="flex items-center justify-center w-6 flex-shrink-0">
+            <button
+              onClick={() => setRightOpen((o) => !o)}
+              className="w-6 h-6 rounded-full border flex items-center justify-center text-slate-500 hover:text-white transition-all"
+              style={{ background: "rgba(6,11,24,0.9)", borderColor: "rgba(255,255,255,0.06)" }}
+            >
+              {rightOpen ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+            </button>
+          </div>
           <motion.div
             className="border-l border-white/[0.03] overflow-hidden"
-            initial={{ width: 288, opacity: 0, x: 20 }}
-            animate={{ width: rightOpen ? 288 : 0, opacity: 1, x: 0 }}
+            style={{ background: "rgba(6,11,24,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: rightOpen ? 288 : 0, opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className="w-72 p-4">
-              <ActivityFeed events={allEvents} history={conversationHistory} onReplay={handleReplay} />
+            <div className="w-72 p-4 h-full overflow-y-auto">
+              <ActivityFeed
+                events={allEvents}
+                history={conversationHistory}
+                onReplay={handleReplay}
+              />
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Agent Detail Panel */}
+      {/* ── Layer 30+: Panels & modals ── */}
       <PanelContainer agent={openPanelAgent || null} onClose={() => setOpenPanel(null)}>
         {PanelContent && <PanelContent />}
       </PanelContainer>
-
-      {/* Settings Panel */}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-
-      {/* Ambient Notifications */}
       <AmbientToast notifications={notifications} onDismiss={dismiss} />
     </main>
   );

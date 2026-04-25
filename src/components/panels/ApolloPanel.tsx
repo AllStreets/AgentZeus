@@ -14,6 +14,7 @@ interface CalEvent {
   location: string | null;
   url: string;
   minutesUntil: number | null;
+  dayLabel: string | null;
   isNow: boolean;
 }
 
@@ -23,6 +24,8 @@ interface CalendarData {
   nextEvent?: CalEvent | null;
 }
 
+type Tab = "today" | "tomorrow" | "week";
+
 function minutesLabel(min: number): string {
   if (min < 60) return `in ${min}m`;
   const h = Math.floor(min / 60);
@@ -30,12 +33,42 @@ function minutesLabel(min: number): string {
   return m > 0 ? `in ${h}h ${m}m` : `in ${h}h`;
 }
 
+function EventRow({ ev }: { ev: CalEvent }) {
+  return (
+    <a
+      href={ev.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-start gap-3 p-3 rounded-lg group transition-colors hover:bg-white/[0.03]"
+      style={{
+        backgroundColor: ev.isNow ? "rgba(249,115,22,0.06)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${ev.isNow ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.03)"}`,
+      }}
+    >
+      <Clock size={12} className="text-orange-400/50 mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-slate-200 truncate">{ev.title}</p>
+        <p className="text-[10px] font-mono text-slate-500">{ev.startFormatted} — {ev.endFormatted}</p>
+        {ev.location && (
+          <p className="text-[10px] text-slate-600 flex items-center gap-1 mt-0.5">
+            <MapPin size={9} /> {ev.location}
+          </p>
+        )}
+      </div>
+      {ev.isNow && <span className="text-[9px] font-mono text-orange-400 shrink-0 mt-0.5">NOW</span>}
+      {!ev.isNow && ev.minutesUntil !== null && ev.minutesUntil > 0 && (
+        <span className="text-[9px] font-mono text-slate-600 shrink-0 mt-0.5">{minutesLabel(ev.minutesUntil)}</span>
+      )}
+    </a>
+  );
+}
+
 export default function ApolloPanel() {
   const [data, setData] = useState<CalendarData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"today" | "tomorrow">("today");
+  const [tab, setTab] = useState<Tab>("today");
 
-  const fetchEvents = useCallback(async (day: "today" | "tomorrow") => {
+  const fetchEvents = useCallback(async (day: Tab) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/calendar?action=${day}`);
@@ -61,7 +94,6 @@ export default function ApolloPanel() {
     return (
       <div className="p-5 space-y-4">
         <p className="text-[11px] font-mono text-slate-500 uppercase tracking-wider">Calendar</p>
-
         <div className="p-4 rounded-lg space-y-3" style={{ backgroundColor: "rgba(249,115,22,0.05)", border: "1px solid rgba(249,115,22,0.1)" }}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: "rgba(249,115,22,0.12)", color: "#f97316" }}>
@@ -80,7 +112,6 @@ export default function ApolloPanel() {
             Connect Google Calendar <ExternalLink size={10} />
           </a>
         </div>
-
         <p className="text-xs text-slate-500 leading-relaxed">
           Connect your calendar to see today&apos;s schedule, get meeting reminders, and create events by voice.
         </p>
@@ -89,6 +120,18 @@ export default function ApolloPanel() {
   }
 
   const events = data.events || [];
+
+  // For week tab: group events by dayLabel
+  const grouped: { label: string; events: CalEvent[] }[] = [];
+  if (tab === "week") {
+    const seen = new Map<string, CalEvent[]>();
+    for (const ev of events) {
+      const key = ev.dayLabel || "Unknown";
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(ev);
+    }
+    seen.forEach((evs, label) => grouped.push({ label, events: evs }));
+  }
 
   return (
     <div className="p-5 flex flex-col gap-4">
@@ -119,9 +162,9 @@ export default function ApolloPanel() {
         </div>
       )}
 
-      {/* Day tabs */}
+      {/* Tabs */}
       <div className="flex gap-1">
-        {(["today", "tomorrow"] as const).map((d) => (
+        {(["today", "tomorrow", "week"] as const).map((d) => (
           <button
             key={d}
             onClick={() => setTab(d)}
@@ -132,7 +175,7 @@ export default function ApolloPanel() {
               border: `1px solid ${tab === d ? "rgba(249,115,22,0.2)" : "rgba(255,255,255,0.04)"}`,
             }}
           >
-            {d}
+            {d === "week" ? "7 Days" : d}
           </button>
         ))}
       </div>
@@ -141,44 +184,30 @@ export default function ApolloPanel() {
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
           {events.length === 0 ? (
-            <p className="text-xs text-slate-600 text-center py-6">No events {tab}</p>
+            <p className="text-xs text-slate-600 text-center py-6">
+              No events {tab === "week" ? "in the next 7 days" : tab}
+            </p>
+          ) : tab === "week" ? (
+            <div className="space-y-4">
+              {grouped.map(({ label, events: dayEvents }) => (
+                <div key={label}>
+                  <p className="text-[9px] font-mono text-slate-600 uppercase tracking-widest mb-1.5">{label}</p>
+                  <div className="space-y-1.5">
+                    {dayEvents.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="space-y-1.5">
-              {events.map((ev) => (
-                <a
-                  key={ev.id}
-                  href={ev.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-3 p-3 rounded-lg group transition-colors hover:bg-white/[0.03]"
-                  style={{
-                    backgroundColor: ev.isNow ? "rgba(249,115,22,0.06)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${ev.isNow ? "rgba(249,115,22,0.15)" : "rgba(255,255,255,0.03)"}`,
-                  }}
-                >
-                  <Clock size={12} className="text-orange-400/50 mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-200 truncate">{ev.title}</p>
-                    <p className="text-[10px] font-mono text-slate-500">{ev.startFormatted} — {ev.endFormatted}</p>
-                    {ev.location && (
-                      <p className="text-[10px] text-slate-600 flex items-center gap-1 mt-0.5">
-                        <MapPin size={9} /> {ev.location}
-                      </p>
-                    )}
-                  </div>
-                  {ev.isNow && <span className="text-[9px] font-mono text-orange-400 shrink-0 mt-0.5">NOW</span>}
-                  {!ev.isNow && ev.minutesUntil !== null && ev.minutesUntil > 0 && (
-                    <span className="text-[9px] font-mono text-slate-600 shrink-0 mt-0.5">{minutesLabel(ev.minutesUntil)}</span>
-                  )}
-                </a>
-              ))}
+              {events.map((ev) => <EventRow key={ev.id} ev={ev} />)}
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
       <p className="text-[10px] font-mono text-slate-600 uppercase tracking-wider">
-        Say &quot;Apollo, what&apos;s on my calendar today?&quot;
+        Say &quot;Apollo, what&apos;s on my calendar this week?&quot;
       </p>
     </div>
   );

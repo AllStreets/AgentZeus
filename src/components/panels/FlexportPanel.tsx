@@ -2,27 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, ExternalLink, Radio, Users, BarChart2, Ship, Zap, Target, Activity, Plane, Truck, Map, Calculator, BookOpen, Rocket, Settings } from "lucide-react";
+import { TrendingUp, ExternalLink, Radio, BarChart2, Ship, Zap, Target, Plane, Truck, Map } from "lucide-react";
 import { agentBus } from "@/lib/agentBus";
 
 const FLEXPORT_URL = "http://localhost:5174";
 
-// Route map — all actual routes in the Flexport app.
-// Prospects, Pipeline, and Signals all live on the home page "/".
+// Route map — matches actual Flexport app sidebar navigation.
 const PAGES = [
-  { id: "",            label: "Prospects",         icon: Users,       color: "#f59e0b", keywords: ["prospect","lead","contact","account","who should i call","outreach"] },
-  { id: "",            label: "Pipeline",           icon: BarChart2,   color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm"] },
-  { id: "",            label: "Signals",            icon: Zap,         color: "#FF2D55", keywords: ["signal","news","alert","trigger","trade news","tariff news","indicator"] },
-  { id: "vessels",     label: "Vessels",            icon: Ship,        color: "#0A84FF", keywords: ["vessel","ship","ocean","freight","cargo","container","shipping","port"] },
-  { id: "flights",     label: "Flights",            icon: Plane,       color: "#64D2FF", keywords: ["flight","air","airfreight","airline","cargo plane","air cargo"] },
+  { id: "",            label: "Home",               icon: TrendingUp,  color: "#f59e0b", keywords: ["home","dashboard","overview"] },
+  { id: "flights",     label: "Air Freight",        icon: Plane,       color: "#64D2FF", keywords: ["flight","air","airfreight","airline","cargo plane","air cargo"] },
   { id: "land",        label: "Land Freight",       icon: Truck,       color: "#FF9F0A", keywords: ["land","truck","road","ground","drayage","ltl","ftl","inland"] },
-  { id: "trade",       label: "Trade",              icon: Target,      color: "#30D158", keywords: ["trade","import","export","globe","trade map","trade flow"] },
-  { id: "performance", label: "Performance",        icon: Activity,    color: "#BF5AF2", keywords: ["performance","kpi","quota","metrics","numbers","goal","target","attainment"] },
+  { id: "vessels",     label: "Ocean Freight",      icon: Ship,        color: "#0A84FF", keywords: ["vessel","ship","ocean","freight","cargo","container","shipping","port"] },
   { id: "market",      label: "Market Map",         icon: Map,         color: "#5E5CE6", keywords: ["market","market map","territory","geographic","coverage","region map"] },
-  { id: "tariff",      label: "Tariff Calculator",  icon: Calculator,  color: "#FF453A", keywords: ["tariff","hs code","duty","duty rate","calculate","calculator","harmonized"] },
-  { id: "research",    label: "Research",           icon: BookOpen,    color: "#636366", keywords: ["research","intel","investigate","company","account research","background"] },
-  { id: "pilot",       label: "Pilot",              icon: Rocket,      color: "#FFD60A", keywords: ["pilot","trial","beta","test run","new feature","pilot program"] },
-  { id: "settings",    label: "Settings",           icon: Settings,    color: "#8E8E93", keywords: ["settings","config","preferences","account settings","setup"] },
+  { id: "trade",       label: "Trade Intelligence", icon: Target,      color: "#30D158", keywords: ["trade","import","export","trade map","trade flow","intelligence"] },
+  { id: "pilot",       label: "Agentic Outreach",   icon: Zap,         color: "#FF2D55", keywords: ["outreach","agentic","signal","prospect","lead","contact","who should i call"] },
+  { id: "performance", label: "Sales CRM",          icon: BarChart2,   color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm","sales"] },
 ];
 
 async function askZeus(query: string): Promise<string | null> {
@@ -53,7 +47,7 @@ export default function FlexportPanel() {
 
   function openPage(page: string) {
     setActivePage(page);
-    // Empty string = home page (prospects/pipeline/signals all live on "/")
+    setTimeout(() => setActivePage(null), 1500);
     const url = page ? `${FLEXPORT_URL}/${page}` : FLEXPORT_URL;
     window.open(url, "_blank", "noopener,noreferrer");
   }

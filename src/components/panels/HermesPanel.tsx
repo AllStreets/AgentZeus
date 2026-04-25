@@ -116,11 +116,14 @@ export default function HermesPanel() {
             ) : (
               <div className="space-y-1.5">
                 {(gmail.messages || []).map((email) => (
-                  <motion.div
+                  <motion.a
                     key={email.id}
+                    href={`https://mail.google.com/mail/u/0/#all/${email.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-lg"
+                    className="block p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
                     style={{ backgroundColor: "rgba(255,255,255,0.02)", border: `1px solid ${email.unread ? "rgba(20,184,166,0.12)" : "rgba(255,255,255,0.03)"}` }}
                   >
                     <div className="flex items-start gap-2">
@@ -135,7 +138,7 @@ export default function HermesPanel() {
                         )}
                       </div>
                     </div>
-                  </motion.div>
+                  </motion.a>
                 ))}
               </div>
             )}
