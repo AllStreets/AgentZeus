@@ -22,7 +22,7 @@ export async function runClio({ intent, transcript, session_id }: RunParams): Pr
     : "No notes yet.";
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   // Summarize a specific note
   if (body.action === "summarize" && body.content) {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-mini",
       messages: [
         {
           role: "system",

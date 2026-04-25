@@ -94,7 +94,7 @@ export async function runApollo({ intent, transcript, session_id }: RunParams): 
   }
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

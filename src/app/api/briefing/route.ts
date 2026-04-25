@@ -68,7 +68,7 @@ Tasks: ${taskSummary}
 Start with a time-of-day greeting, then cover calendar, email, and tasks in order. End with one sentence of encouragement.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     messages: [{ role: "user", content: briefingPrompt }],
   });
 

@@ -35,7 +35,7 @@ const AGENT_DESCRIPTIONS: Record<Exclude<AgentName, "zeus">, string> = {
 
 async function classifyIntent(transcript: string): Promise<{ agent: AgentName; intent: string }> {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {
@@ -122,7 +122,7 @@ async function handleAgentRequest(
 
   if (agent === "zeus") {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5.4-mini",
       messages: [
         {
           role: "system",
@@ -203,7 +203,7 @@ async function extractMemoryFacts(transcript: string, response: string, agent: s
   const supabase = createServiceClient();
 
   const extraction = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

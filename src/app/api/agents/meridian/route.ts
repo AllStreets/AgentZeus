@@ -94,7 +94,7 @@ export async function runMeridian({ intent, transcript, session_id }: RunParams)
   const alreadyFiredCmds = new Set(immediateActions.map((a) => a.cmd));
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

@@ -49,7 +49,7 @@ export async function runFlexport({ intent, transcript, session_id }: RunParams)
   await Promise.all(Object.entries(fetches).map(async ([k, p]) => { results[k] = await p; }));
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

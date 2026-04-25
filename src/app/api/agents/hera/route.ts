@@ -26,7 +26,7 @@ export async function runHera({ intent, transcript, session_id }: RunParams): Pr
   }
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

@@ -166,9 +166,9 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 {tab === "about" && (
                   <div className="space-y-3">
                     <p className="text-sm text-white font-semibold">AgentZeus</p>
-                    <p className="text-xs text-slate-400 leading-relaxed">A voice-activated agentic dashboard powered by GPT-4o mini. Say a command to route it to the right agent.</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">A voice and text-activated agentic dashboard powered by GPT-5.4 mini. Say or type a command to route it to the right agent.</p>
                     <div className="space-y-1.5 mt-4">
-                      {[["Version", "1.0.0"], ["Model", "gpt-4o-mini"], ["Agents", "7 active"], ["Voice", "Web Speech API + OpenAI TTS"]].map(([k, v]) => (
+                      {[["Version", "2.0.0"], ["Model", "gpt-5.4-mini"], ["Agents", "12 active"], ["Voice", "Web Speech API + OpenAI TTS"], ["Input", "Voice + Text"]].map(([k, v]) => (
                         <div key={k} className="flex justify-between text-xs">
                           <span className="text-slate-500">{k}</span>
                           <span className="text-slate-300 font-mono">{v}</span>

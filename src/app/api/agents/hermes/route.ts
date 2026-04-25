@@ -46,7 +46,7 @@ export async function runHermes({ intent, transcript, session_id, slack_webhook 
   const { summary: gmailSummary } = await getGmailContext();
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {

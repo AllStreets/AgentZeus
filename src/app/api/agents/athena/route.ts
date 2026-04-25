@@ -26,7 +26,7 @@ export async function runAthena({ intent, transcript, session_id, github_token }
   if (github_token) githubContext = await fetchGitHubSummary(github_token);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     messages: [
       {
