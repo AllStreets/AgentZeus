@@ -15,7 +15,12 @@ async function getGmailContext(): Promise<{ summary: string; messages: EmailMsg[
     const data = await res.json();
     if (!data.connected) return { summary: "Gmail is not connected.", messages: [] };
     const messages: EmailMsg[] = (data.messages || []).slice(0, 8);
-    const list = messages.map((m: EmailMsg) => `Subject: "${m.subject}" | From: ${m.from} | Preview: ${m.snippet}`).join("\n");
+    const list = messages.map((m: EmailMsg) => {
+      // Extract bare email address from "Display Name <email@domain.com>" format
+      const emailMatch = m.from.match(/<([^>]+)>/);
+      const email = emailMatch ? emailMatch[1] : m.from;
+      return `Subject: "${m.subject}" | From: ${m.from} | ReplyTo: ${email} | Preview: ${m.snippet}`;
+    }).join("\n");
     return { summary: `Gmail connected. Unread: ${data.unreadCount}.\n\nRecent emails:\n${list || "none"}`, messages };
   } catch {
     return { summary: "Gmail fetch failed.", messages: [] };
@@ -52,7 +57,7 @@ ${gmailSummary}
 
 ${slack_webhook ? "Slack webhook is connected — you can send Slack messages." : "Slack is not connected."}
 
-If the user wants to draft a reply, write the full email body in the draft_reply action.
+If the user wants to draft a reply, use the exact ReplyTo address from the email list above as the "to" field — never construct or guess an email address.
 If the user wants to send a Slack message, include a send_slack action.
 
 Respond with JSON:

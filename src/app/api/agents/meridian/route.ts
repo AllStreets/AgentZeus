@@ -5,7 +5,7 @@ import { getBaseUrl } from "@/lib/url";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
 
-const MERIDIAN_URL = process.env.MERIDIAN_URL || "http://localhost:8080";
+const MERIDIAN_URL = process.env.MERIDIAN_URL || "http://localhost:8765";
 
 async function sendToMeridian(cmd: string, payload?: Record<string, unknown>) {
   try {

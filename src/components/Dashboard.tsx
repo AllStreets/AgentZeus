@@ -70,7 +70,7 @@ export default function Dashboard() {
     if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
       setOpenPanel("meridian");
       // Always open the MERIDIAN app when the agent is invoked
-      window.open("http://localhost:8080", "_blank", "noopener,noreferrer");
+      window.open("http://localhost:8765", "_blank", "noopener,noreferrer");
     } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
       setOpenPanel("chicago");
       window.open("http://localhost:5173", "_blank", "noopener,noreferrer");

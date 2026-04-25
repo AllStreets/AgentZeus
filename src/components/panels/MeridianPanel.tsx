@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Globe, RefreshCw, ExternalLink, Radio } from "lucide-react";
 import { agentBus } from "@/lib/agentBus";
 
-const MERIDIAN_URL = "http://localhost:8080";
+const MERIDIAN_URL = "http://localhost:8765";
 
 const CATEGORIES = [
   { id: "all",      label: "ALL",  color: "#7B61FF" },
