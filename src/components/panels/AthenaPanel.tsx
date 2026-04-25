@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GitPullRequest, AlertCircle, GitBranch, Star, RefreshCw, ExternalLink, Key } from "lucide-react";
+import { GitPullRequest, AlertCircle, GitBranch, GitCommit, Star, RefreshCw, ExternalLink, Key, Plus } from "lucide-react";
 
 interface PR {
   number: number;
@@ -29,6 +29,14 @@ interface Repo {
   url: string;
 }
 
+interface Commit {
+  sha: string;
+  message: string;
+  repo: string;
+  age: number;
+  url: string;
+}
+
 interface GitHubData {
   login: string;
   prs: PR[];
@@ -42,7 +50,13 @@ export default function AthenaPanel() {
   const [data, setData] = useState<GitHubData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"prs" | "issues" | "repos">("prs");
+  const [tab, setTab] = useState<"prs" | "issues" | "repos" | "commits">("prs");
+  const [commits, setCommits] = useState<Commit[]>([]);
+  const [commitsLoading, setCommitsLoading] = useState(false);
+  const [newIssueTitle, setNewIssueTitle] = useState("");
+  const [newIssueRepo, setNewIssueRepo] = useState("");
+  const [creatingIssue, setCreatingIssue] = useState(false);
+  const [showNewIssue, setShowNewIssue] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("github_token") || "";
@@ -70,9 +84,49 @@ export default function AthenaPanel() {
     }
   }, []);
 
+  const fetchCommits = useCallback(async (t: string) => {
+    if (!t) return;
+    setCommitsLoading(true);
+    try {
+      const res = await fetch("/api/github", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: t, action: "commits" }),
+      });
+      const json = await res.json();
+      if (!json.error) setCommits(json.commits || []);
+    } finally {
+      setCommitsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (token) fetchData(token);
   }, [token, fetchData]);
+
+  useEffect(() => {
+    if (tab === "commits" && token && commits.length === 0) fetchCommits(token);
+  }, [tab, token, commits.length, fetchCommits]);
+
+  async function createIssue() {
+    if (!newIssueTitle.trim() || !newIssueRepo.trim()) return;
+    setCreatingIssue(true);
+    try {
+      const res = await fetch("/api/github", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, action: "create_issue", repo: newIssueRepo, title: newIssueTitle }),
+      });
+      const json = await res.json();
+      if (json.url) window.open(json.url, "_blank", "noopener,noreferrer");
+      setNewIssueTitle("");
+      setNewIssueRepo("");
+      setShowNewIssue(false);
+      fetchData(token);
+    } finally {
+      setCreatingIssue(false);
+    }
+  }
 
   function saveToken() {
     localStorage.setItem("github_token", tokenInput);
@@ -137,11 +191,12 @@ export default function AthenaPanel() {
 
       {/* Stats row */}
       {data && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-1.5">
           {[
-            { label: "Open PRs", count: data.prs.length, tab: "prs" as const, color: "#8b5cf6" },
+            { label: "PRs", count: data.prs.length, tab: "prs" as const, color: "#8b5cf6" },
             { label: "Issues", count: data.issues.length, tab: "issues" as const, color: "#ef4444" },
             { label: "Repos", count: data.repos.length, tab: "repos" as const, color: "#3b82f6" },
+            { label: "Commits", count: commits.length || "→", tab: "commits" as const, color: "#10b981" },
           ].map(({ label, count, tab: t, color }) => (
             <button
               key={t}
@@ -204,21 +259,79 @@ export default function AthenaPanel() {
             )}
 
             {tab === "repos" && (
-              data.repos.map((repo) => (
-                <a key={repo.name} href={repo.url} target="_blank" rel="noopener noreferrer"
+              <>
+                {/* New Issue form */}
+                <div className="mb-2">
+                  {!showNewIssue ? (
+                    <button
+                      onClick={() => setShowNewIssue(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-mono w-full transition-colors"
+                      style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)", color: "#8b5cf6" }}
+                    >
+                      <Plus size={10} /> New Issue
+                    </button>
+                  ) : (
+                    <div className="space-y-2 p-3 rounded-lg" style={{ background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.12)" }}>
+                      <input
+                        value={newIssueRepo}
+                        onChange={(e) => setNewIssueRepo(e.target.value)}
+                        placeholder="owner/repo"
+                        className="w-full bg-black/20 border border-white/5 rounded px-2.5 py-1.5 text-[11px] font-mono text-slate-300 placeholder-slate-600 outline-none"
+                      />
+                      <input
+                        value={newIssueTitle}
+                        onChange={(e) => setNewIssueTitle(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && createIssue()}
+                        placeholder="Issue title"
+                        className="w-full bg-black/20 border border-white/5 rounded px-2.5 py-1.5 text-[11px] font-mono text-slate-300 placeholder-slate-600 outline-none"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={createIssue} disabled={creatingIssue}
+                          className="px-3 py-1 rounded text-[10px] font-mono disabled:opacity-40"
+                          style={{ background: "rgba(139,92,246,0.12)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.2)" }}>
+                          {creatingIssue ? "Creating..." : "Create"}
+                        </button>
+                        <button onClick={() => setShowNewIssue(false)} className="text-[10px] font-mono text-slate-600 hover:text-slate-400">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {data.repos.map((repo) => (
+                  <a key={repo.name} href={repo.url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 rounded-lg group transition-colors hover:bg-white/[0.03]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.03)" }}
+                  >
+                    <GitBranch size={13} className="text-blue-400/60 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-300 truncate">{repo.name}</p>
+                      {repo.description && <p className="text-[10px] text-slate-600 truncate">{repo.description}</p>}
+                      <p className="text-[10px] font-mono text-slate-600">pushed {repo.pushedAgo}d ago</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Star size={9} className="text-slate-600" />
+                      <span className="text-[10px] font-mono text-slate-600">{repo.stars}</span>
+                    </div>
+                  </a>
+                ))}
+              </>
+            )}
+
+            {tab === "commits" && (
+              commitsLoading ? (
+                <p className="text-xs text-slate-600 text-center py-6">Loading commits...</p>
+              ) : commits.length === 0 ? (
+                <p className="text-xs text-slate-600 text-center py-6">No recent commits found</p>
+              ) : commits.map((c) => (
+                <a key={c.sha} href={c.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-start gap-3 p-3 rounded-lg group transition-colors hover:bg-white/[0.03]"
                   style={{ backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.03)" }}
                 >
-                  <GitBranch size={13} className="text-blue-400/60 mt-0.5 shrink-0" />
+                  <GitCommit size={13} className="text-emerald-400/60 mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-300 truncate">{repo.name}</p>
-                    {repo.description && <p className="text-[10px] text-slate-600 truncate">{repo.description}</p>}
-                    <p className="text-[10px] font-mono text-slate-600">pushed {repo.pushedAgo}d ago</p>
+                    <p className="text-xs text-slate-300 leading-snug truncate">{c.message}</p>
+                    <p className="text-[10px] font-mono text-slate-600">{c.repo} · {c.sha} · {c.age}d ago</p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Star size={9} className="text-slate-600" />
-                    <span className="text-[10px] font-mono text-slate-600">{repo.stars}</span>
-                  </div>
+                  <ExternalLink size={10} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" />
                 </a>
               ))
             )}

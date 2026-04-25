@@ -8,6 +8,7 @@ import VoiceOrb from "./VoiceOrb";
 interface ConstellationProps {
   agents: AgentInfo[];
   activeAgent: AgentName | null;
+  activeAgents: AgentName[];
   openPanel: AgentName | null;
   agentMessages: Record<string, string>;
   onSelectAgent: (name: AgentName) => void;
@@ -24,17 +25,22 @@ interface ConstellationProps {
 // Zeus SVG center = CSS 53% (pushed down to clear command bar)
 const ZX = 50, ZY = 53;
 
-// All Y shifted +6 from original to clear the command bar at top
+// 12 agents evenly distributed at 30° intervals on an ellipse (rx=40, ry=30)
+// centered on Zeus at (50, 53), clockwise from top.
+// Meridian, Chicago, Flexport are kept adjacent (positions 7-9 on the left).
 const AGENT_POS = [
-  { x: 50,   y: 17 }, // 0 top-center   (hermes)
-  { x: 76,   y: 26 }, // 1 top-right    (athena)
-  { x: 89,   y: 49 }, // 2 right        (apollo)
-  { x: 85,   y: 70 }, // 3 bottom-right (artemis)
-  { x: 64,   y: 83 }, // 4 btm-r-ctr    (ares)
-  { x: 36,   y: 83 }, // 5 btm-l-ctr    (hera)
-  { x: 15,   y: 70 }, // 6 bottom-left  (meridian)
-  { x: 11,   y: 49 }, // 7 left         (chicago)
-  { x: 24,   y: 26 }, // 8 top-left     (flexport)
+  { x: 50, y: 23 }, // 0   top           (hermes)
+  { x: 70, y: 27 }, // 1   upper-right   (clio)
+  { x: 85, y: 38 }, // 2   right-upper   (athena)
+  { x: 90, y: 53 }, // 3   right         (apollo)
+  { x: 85, y: 68 }, // 4   right-lower   (artemis)
+  { x: 70, y: 79 }, // 5   lower-right   (ares)
+  { x: 50, y: 83 }, // 6   bottom        (hera)
+  { x: 30, y: 79 }, // 7   lower-left    (meridian)
+  { x: 15, y: 68 }, // 8   left-lower    (chicago)
+  { x: 10, y: 53 }, // 9   left          (flexport)
+  { x: 15, y: 38 }, // 10  left-upper    (poseidon)
+  { x: 30, y: 27 }, // 11  upper-left    (iris)
 ];
 
 function bezierPt(t: number, x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number) {
@@ -87,8 +93,8 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
       return (
         <svg viewBox="0 0 76 76" width={80} height={80}>
           <circle cx="38" cy="38" r="32" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Top bar */}
-          <line x1="6" y1="26" x2="70" y2="26" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.65} />
+          {/* Top bar — clipped to circle boundary at y=26 */}
+          <line x1="9" y1="26" x2="67" y2="26" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.65} />
           {/* Calendar tabs */}
           <line x1="24" y1="10" x2="24" y2="22" stroke={color} strokeWidth="2" strokeOpacity={so} />
           <line x1="52" y1="10" x2="52" y2="22" stroke={color} strokeWidth="2" strokeOpacity={so} />
@@ -142,21 +148,34 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Meridian: globe with lat/long lines ──────────────────────────────────
+    // ── Meridian: globe with continent silhouettes and location pin ─────────
     case "meridian":
       return (
         <svg viewBox="0 0 80 80" width={84} height={84}>
+          <defs>
+            <clipPath id="globe-clip"><circle cx="40" cy="40" r="34" /></clipPath>
+          </defs>
           <circle cx="40" cy="40" r="34" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Equator */}
-          <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} />
-          {/* Latitude arcs */}
-          <path d="M 9 27 Q 40 18 71 27" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" />
-          <path d="M 9 53 Q 40 62 71 53" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" />
-          {/* Central meridian ellipse */}
-          <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.65} fill="none" />
-          {/* Pole dots */}
-          <circle cx="40" cy="6" r="2.5" fill={color} fillOpacity={dot} />
-          <circle cx="40" cy="74" r="2.5" fill={color} fillOpacity={dot} />
+          <g clipPath="url(#globe-clip)">
+            {/* Grid lines */}
+            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.3} />
+            <path d="M 9 27 Q 40 18 71 27" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.25} fill="none" />
+            <path d="M 9 53 Q 40 62 71 53" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.25} fill="none" />
+            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.3} fill="none" />
+            {/* Europe/Africa silhouette */}
+            <path d="M 36 18 L 38 20 L 40 19 L 42 21 L 41 24 L 43 26 L 42 28 L 44 30 L 43 33 L 45 35 L 44 38 L 42 37 L 40 39 L 41 42 L 39 44 L 40 48 L 38 52 L 36 50 L 35 46 L 37 43 L 35 40 L 33 38 L 34 34 L 32 30 L 34 26 L 33 22 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} />
+            {/* Americas silhouette (left side) */}
+            <path d="M 20 22 L 22 24 L 24 23 L 25 26 L 23 29 L 24 32 L 22 35 L 23 38 L 21 40 L 22 44 L 20 47 L 21 50 L 19 53 L 17 51 L 18 47 L 16 44 L 17 40 L 15 37 L 17 33 L 16 29 L 18 25 Z"
+              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
+            {/* Asia silhouette (right side) */}
+            <path d="M 48 22 L 52 24 L 56 23 L 60 26 L 58 28 L 62 30 L 60 33 L 56 32 L 54 35 L 56 38 L 54 40 L 50 38 L 48 36 L 46 33 L 48 28 L 46 25 Z"
+              fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
+          </g>
+          {/* Location pin on Europe */}
+          <circle cx="42" cy="28" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
+          <circle cx="42" cy="28" r="1.2" fill={color} fillOpacity={dot} />
+          <path d="M 42 31 L 40 35 L 44 35 Z" fill={color} fillOpacity={dot * 0.7} />
         </svg>
       );
 
@@ -209,14 +228,84 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
+    // ── Clio: notepad with ruled lines and pen ───────────────────────────────
+    case "clio":
+      return (
+        <svg viewBox="0 0 76 80" width={80} height={84}>
+          {/* Notepad body */}
+          <rect x="8" y="10" width="44" height="58" rx="3" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Top binding strip */}
+          <rect x="8" y="10" width="44" height="9" rx="2" fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.5} />
+          {/* Binding holes */}
+          {[20, 30, 40].map((cx) => (
+            <circle key={cx} cx={cx} cy={14.5} r="2.5" fill={color} fillOpacity={dot} />
+          ))}
+          {/* Ruled lines */}
+          <line x1="14" y1="30" x2="44" y2="30" stroke={color} strokeWidth="1.8" strokeOpacity={so} strokeLinecap="round" />
+          <line x1="14" y1="40" x2="44" y2="40" stroke={color} strokeWidth="1.8" strokeOpacity={so} strokeLinecap="round" />
+          <line x1="14" y1="50" x2="38" y2="50" stroke={color} strokeWidth="1.8" strokeOpacity={so} strokeLinecap="round" />
+          <line x1="14" y1="60" x2="42" y2="60" stroke={color} strokeWidth="1.4" strokeOpacity={so * 0.65} strokeLinecap="round" />
+          {/* Pen (diagonal, crossing the notepad) */}
+          <line x1="58" y1="8" x2="46" y2="72" stroke={color} strokeWidth="2.8" strokeOpacity={so} strokeLinecap="round" />
+          {/* Pen nib */}
+          <path d="M 46 72 L 42 78 L 48 68 Z" fill={color} fillOpacity={dot} strokeWidth="0" />
+        </svg>
+      );
+
+    // ── Poseidon: trident over waves ──────────────────────────────────────────
+    case "poseidon":
+      return (
+        <svg viewBox="0 0 76 80" width={80} height={84}>
+          {/* Shield/droplet shape */}
+          <path d="M 38 4 Q 68 20 68 48 Q 68 72 38 76 Q 8 72 8 48 Q 8 20 38 4 Z"
+            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Trident shaft */}
+          <line x1="38" y1="18" x2="38" y2="62" stroke={color} strokeWidth="2.2" strokeOpacity={so} strokeLinecap="round" />
+          {/* Trident prongs */}
+          <path d="M 24 30 L 24 18 L 27 22" stroke={color} strokeWidth="1.8" strokeOpacity={so} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 38 18 L 38 12" stroke={color} strokeWidth="1.8" strokeOpacity={so} strokeLinecap="round" />
+          <path d="M 52 30 L 52 18 L 49 22" stroke={color} strokeWidth="1.8" strokeOpacity={so} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Cross bar */}
+          <line x1="24" y1="30" x2="52" y2="30" stroke={color} strokeWidth="1.6" strokeOpacity={so * 0.8} strokeLinecap="round" />
+          {/* Waves */}
+          <path d="M 14 52 Q 22 46 30 52 Q 38 58 46 52 Q 54 46 62 52"
+            stroke={color} strokeWidth="1.6" strokeOpacity={so * 0.7} fill="none" strokeLinecap="round" />
+          <path d="M 16 60 Q 24 54 32 60 Q 40 66 48 60 Q 56 54 60 58"
+            stroke={color} strokeWidth="1.2" strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
+        </svg>
+      );
+
+    // ── Iris: eye with rainbow iris ──────────────────────────────────────────
+    case "iris":
+      return (
+        <svg viewBox="0 0 84 68" width={88} height={72}>
+          {/* Eye outline */}
+          <path d="M 4 34 Q 42 4 80 34 Q 42 64 4 34 Z"
+            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Outer iris */}
+          <circle cx="42" cy="34" r="14" stroke={color} strokeWidth="1.6" strokeOpacity={so} fill={color} fillOpacity={fo * 1.6} />
+          {/* Inner iris ring */}
+          <circle cx="42" cy="34" r="9" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.7} fill="none" />
+          {/* Pupil */}
+          <circle cx="42" cy="34" r="5" fill={color} fillOpacity={dot} />
+          {/* Highlight */}
+          <circle cx="46" cy="30" r="2.5" fill={color} fillOpacity={dot * 0.9} />
+          {/* Iris detail lines */}
+          <line x1="42" y1="20" x2="42" y2="24" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          <line x1="42" y1="44" x2="42" y2="48" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          <line x1="28" y1="34" x2="32" y2="34" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          <line x1="52" y1="34" x2="56" y2="34" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+        </svg>
+      );
+
     default:
       return <svg viewBox="0 0 60 60" width={64} height={64}><circle cx="30" cy="30" r="26" fill={color} fillOpacity={fo} stroke={color} strokeWidth={sw} strokeOpacity={so} /></svg>;
   }
 }
 
 // ─── Synaptic field ───────────────────────────────────────────────────────────
-function SynapticField({ agents, activeAgent, openPanel, hoveredAgent }: {
-  agents: AgentInfo[]; activeAgent: string | null; openPanel: string | null; hoveredAgent: string | null;
+function SynapticField({ agents, activeAgent, activeAgents, openPanel, hoveredAgent }: {
+  agents: AgentInfo[]; activeAgent: string | null; activeAgents: string[]; openPanel: string | null; hoveredAgent: string | null;
 }) {
   const coreRefs = useRef<(SVGPathElement | null)[]>([]);
   const glowRefs = useRef<(SVGPathElement | null)[]>([]);
@@ -238,7 +327,7 @@ function SynapticField({ agents, activeAgent, openPanel, hoveredAgent }: {
       const len = Math.sqrt(dx * dx + dy * dy);
       const nx = -dy / len, ny = dx / len;
 
-      const isActive  = activeAgent === agent.name;
+      const isActive  = activeAgent === agent.name || activeAgents.includes(agent.name);
       const isPanel   = openPanel === agent.name;
       const isHovered = hoveredAgent === agent.name;
       const isLit     = isActive || isPanel;
@@ -444,7 +533,7 @@ function ResponseStrip({ response, responseAgent, transcript, interimTranscript,
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function AgentConstellation({
-  agents, activeAgent, openPanel, agentMessages, onSelectAgent,
+  agents, activeAgent, activeAgents, openPanel, agentMessages, onSelectAgent,
   isListening, isSpeaking, isProcessing, onOrbClick,
   response, responseAgent, transcript, interimTranscript,
 }: ConstellationProps) {
@@ -455,13 +544,14 @@ export default function AgentConstellation({
       <SynapticField
         agents={agents}
         activeAgent={activeAgent}
+        activeAgents={activeAgents}
         openPanel={openPanel}
         hoveredAgent={hoveredAgent}
       />
 
       {agents.map((agent, i) => {
         const pos = AGENT_POS[i];
-        const isLit = activeAgent === agent.name || openPanel === agent.name;
+        const isLit = activeAgent === agent.name || activeAgents.includes(agent.name) || openPanel === agent.name;
         return (
           <div key={agent.name} style={{
             position: "absolute",

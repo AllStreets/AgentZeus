@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from "react";
 
 interface AmbientNotification {
   id: string;
-  type: "gmail" | "calendar";
+  type: "gmail" | "calendar" | "task" | "system" | "agent";
   message: string;
+  agent?: string;
   timestamp: Date;
 }
 
@@ -43,7 +44,6 @@ export function useAmbientMonitor() {
         if (data.connected && data.nextEvent) {
           const { minutesUntil, title } = data.nextEvent;
           if (minutesUntil !== null && minutesUntil <= 10 && minutesUntil > 0) {
-            const key = `${title}-${minutesUntil}`;
             const alreadyNotified = lastEventCountRef.current === minutesUntil;
             if (!alreadyNotified) {
               addNotification("calendar", `"${title}" starts in ${minutesUntil} minute${minutesUntil !== 1 ? "s" : ""}`);
@@ -54,13 +54,25 @@ export function useAmbientMonitor() {
       } catch {
         // silent
       }
+
+      // Poll for proactive agent alerts (Artemis: overdue tasks, Ares: system health)
+      try {
+        const res = await fetch("/api/alerts");
+        const data = await res.json();
+        for (const alert of data.alerts || []) {
+          addNotification(alert.type || "agent", alert.message, alert.agent);
+        }
+      } catch {
+        // silent — alerts endpoint may not exist yet
+      }
     }
 
-    function addNotification(type: AmbientNotification["type"], message: string) {
+    function addNotification(type: AmbientNotification["type"], message: string, agent?: string) {
       const note: AmbientNotification = {
         id: crypto.randomUUID(),
         type,
         message,
+        agent,
         timestamp: new Date(),
       };
       setNotifications((prev) => [note, ...prev.slice(0, 9)]);

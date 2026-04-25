@@ -14,6 +14,9 @@ import HermesPanel from "./panels/HermesPanel";
 import AthenaPanel from "./panels/AthenaPanel";
 import ApolloPanel from "./panels/ApolloPanel";
 import AresPanel from "./panels/AresPanel";
+import ClioPanel from "./panels/ClioPanel";
+import PoseidonPanel from "./panels/PoseidonPanel";
+import IrisPanel from "./panels/IrisPanel";
 import MeridianPanel from "./panels/MeridianPanel";
 import ChicagoPanel from "./panels/ChicagoPanel";
 import FlexportPanel from "./panels/FlexportPanel";
@@ -41,6 +44,9 @@ const PANEL_COMPONENTS: Partial<Record<AgentName, React.ComponentType>> = {
   athena: AthenaPanel,
   apollo: ApolloPanel,
   ares: AresPanel,
+  clio: ClioPanel,
+  poseidon: PoseidonPanel,
+  iris: IrisPanel,
   meridian: MeridianPanel,
   chicago: ChicagoPanel,
   flexport: FlexportPanel,
@@ -58,6 +64,7 @@ export default function Dashboard() {
   const [rightOpen, setRightOpen] = useState(false);
 
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
+  const [activeAgents, setActiveAgents] = useState<AgentName[]>([]);
   const { isSpeaking, speak, unlockAudio } = useVoiceOutput();
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
@@ -83,13 +90,21 @@ export default function Dashboard() {
       setOpenPanel("artemis");
     } else if (/\bares\b|\bdeployment\b|\bvercel\b|\bdevops\b|\bserver\b/.test(t)) {
       setOpenPanel("ares");
+    } else if (/\bclio\b|\bvoice note\b|\brecord note\b|\btranscribe\b/.test(t)) {
+      setOpenPanel("clio");
     } else if (/\bhera\b|\bnotes?\b|\bmemory\b|\bremember\b/.test(t)) {
       setOpenPanel("hera");
+    } else if (/\bposeidon\b|\bresearch\b|\bweb search\b|\blook up\b|\bfact.?check\b/.test(t)) {
+      setOpenPanel("poseidon");
+    } else if (/\biris\b|\bscreenshot\b|\bscreen\b|\bvision\b|\banalyze.*image\b|\bocr\b/.test(t)) {
+      setOpenPanel("iris");
     }
   }, []);
 
   const handleTranscript = useCallback(
     async (text: string) => {
+      // Reset active agents on new prompt
+      setActiveAgents([]);
       handleOptimisticActions(text);
       const response = await sendCommand(text);
       if (response) {
@@ -97,6 +112,12 @@ export default function Dashboard() {
           const target = response.intent.replace("navigate:", "");
           if (target === "settings") setSettingsOpen(true);
           else setOpenPanel(target as AgentName);
+        }
+        // Track active agents (illuminated lines) — support multi-agent synthesis
+        if (response.agents_used?.length) {
+          setActiveAgents(response.agents_used as AgentName[]);
+        } else {
+          setActiveAgents((prev) => prev.includes(response.agent as AgentName) ? prev : [...prev, response.agent as AgentName]);
         }
         setAgentMessages((prev) => ({ ...prev, [response.agent]: response.response }));
         setTimeout(() => {
@@ -171,6 +192,7 @@ export default function Dashboard() {
         <AgentConstellation
           agents={displayAgents}
           activeAgent={currentActiveAgent}
+          activeAgents={activeAgents}
           openPanel={openPanel}
           agentMessages={agentMessages}
           onSelectAgent={(name) => setOpenPanel(name)}

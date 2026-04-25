@@ -74,8 +74,15 @@ Start with a time-of-day greeting, then cover calendar, email, and tasks in orde
 
   const briefing = response.choices[0].message.content!;
 
+  // Track which agents contributed
+  const agentsUsed: string[] = ["zeus"];
+  if (tasks?.length) agentsUsed.push("artemis");
+  if (gmailToken) agentsUsed.push("hermes");
+  if (calToken) agentsUsed.push("apollo");
+
   return NextResponse.json({
     briefing,
+    agents_used: agentsUsed,
     data: { tasks: taskSummary, gmail: gmailSummary, calendar: calSummary },
   });
 }

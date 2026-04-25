@@ -1,4 +1,4 @@
-export type AgentName = "zeus" | "hermes" | "athena" | "apollo" | "artemis" | "ares" | "hera" | "meridian" | "chicago" | "flexport";
+export type AgentName = "zeus" | "hermes" | "athena" | "apollo" | "artemis" | "ares" | "hera" | "meridian" | "chicago" | "flexport" | "clio" | "poseidon" | "iris";
 
 export interface AgentEvent {
   id: string;
@@ -29,6 +29,7 @@ export interface ZeusResponse {
   intent: string;
   response: string;
   session_id: string;
+  agents_used?: string[];
 }
 
 export interface Task {

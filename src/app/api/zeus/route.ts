@@ -12,6 +12,9 @@ import { runAres } from "@/app/api/agents/ares/route";
 import { runMeridian } from "@/app/api/agents/meridian/route";
 import { runChicago } from "@/app/api/agents/chicago/route";
 import { runFlexport } from "@/app/api/agents/flexport/route";
+import { runClio } from "@/app/api/agents/clio/route";
+import { runPoseidon } from "@/app/api/agents/poseidon/route";
+import { runIris } from "@/app/api/agents/iris/route";
 
 export const maxDuration = 30;
 
@@ -25,6 +28,9 @@ const AGENT_DESCRIPTIONS: Record<Exclude<AgentName, "zeus">, string> = {
   meridian: "Geopolitical Intelligence — globe control, news briefings, conflict analysis, MERIDIAN dashboard",
   chicago: "City Intelligence — Chicago transit (CTA), weather, events, food, sports, nightlife",
   flexport: "Sales Intelligence — Flexport prospects, pipeline, trade signals, vessel tracking",
+  clio: "Voice Notes — recording, transcribing, saving, and summarizing spoken notes",
+  poseidon: "Web Intelligence — deep web research, fact-checking, competitive analysis, source verification",
+  iris: "Screen & Vision — screenshot analysis, OCR, visual understanding, image description",
 };
 
 async function classifyIntent(transcript: string): Promise<{ agent: AgentName; intent: string }> {
@@ -44,6 +50,7 @@ ${Object.entries(AGENT_DESCRIPTIONS)
 If the command is a general greeting or doesn't fit any agent, use "zeus" as the agent.
 
 Also detect these special intents:
+- Navigation: "open clio" / "voice notes" / "take a note" / "start recording" → agent: "clio", intent: "navigate:clio"
 - Navigation: "show my tasks" / "open tasks" / "show Artemis" → agent: "artemis", intent: "navigate:artemis"
 - Navigation: "show notes" / "open Hera" / "my notes" → agent: "hera", intent: "navigate:hera"
 - Navigation: "open settings" / "go to settings" → agent: "zeus", intent: "navigate:settings"
@@ -54,6 +61,8 @@ Also detect these special intents:
 - Meridian globe: "open meridian" / "show the globe" / "geopolitical briefing" / "what's happening in the world" → agent: "meridian", intent: "navigate:meridian" or action
 - Chicago city: "open chicago" / "CTA status" / "what's on tonight in chicago" / "train times" / "chicago weather" → agent: "chicago", intent: "navigate:chicago" or action
 - Flexport sales: "open flexport" / "show my prospects" / "pipeline update" / "who should I call" / "hot leads" → agent: "flexport", intent: "navigate:flexport" or action
+- Poseidon web: "open poseidon" / "research this" / "look up" / "web search" / "fact check" → agent: "poseidon", intent: "navigate:poseidon" or action
+- Iris vision: "open iris" / "take screenshot" / "analyze screen" / "what am I looking at" / "OCR this" → agent: "iris", intent: "navigate:iris" or action
 
 Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or navigate:target>" }`,
       },
@@ -91,7 +100,8 @@ async function handleAgentRequest(
       const data = await res.json();
       const reply = data.briefing;
       logEvent(supabase, sessionId, "zeus", "complete", reply);
-      return reply;
+      // Return agents_used for multi-agent line illumination
+      return JSON.stringify({ __multi: true, response: reply, agents_used: data.agents_used || ["zeus"] });
     } catch {
       return "I had trouble assembling your briefing. Please try again.";
     }
@@ -138,6 +148,9 @@ async function handleAgentRequest(
     case "meridian": return runMeridian(params);
     case "chicago":  return runChicago(params);
     case "flexport": return runFlexport(params);
+    case "clio":     return runClio(params);
+    case "poseidon": return runPoseidon(params);
+    case "iris":     return runIris(params);
     default:         return "Agent not found.";
   }
 }
@@ -161,14 +174,24 @@ export async function POST(req: NextRequest) {
     if (agent === "athena" && github_token) extras.github_token = github_token;
     if (agent === "ares" && vercel_token) extras.vercel_token = vercel_token;
     if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
-    const response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
+    let response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
+
+    // Check if this is a multi-agent response (briefing, synthesis)
+    let agents_used: string[] | undefined;
+    try {
+      const parsed = JSON.parse(response);
+      if (parsed.__multi) {
+        response = parsed.response;
+        agents_used = parsed.agents_used;
+      }
+    } catch { /* not multi-agent JSON, use as-is */ }
 
     // Fire-and-forget — don't await these, they must not delay the response
     const supabase = createServiceClient();
     Promise.resolve(supabase.from("conversations").insert({ transcript, agent_name: agent, response })).catch(() => {});
     extractMemoryFacts(transcript, response, agent).catch(() => {});
 
-    return NextResponse.json({ agent, intent, response, session_id: sessionId });
+    return NextResponse.json({ agent, intent, response, session_id: sessionId, ...(agents_used ? { agents_used } : {}) });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Zeus POST error:", message);

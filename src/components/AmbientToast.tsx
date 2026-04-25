@@ -1,14 +1,22 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Calendar, X } from "lucide-react";
+import { Mail, Calendar, X, AlertTriangle, Target, Zap } from "lucide-react";
 
 interface Notification {
   id: string;
-  type: "gmail" | "calendar";
+  type: "gmail" | "calendar" | "task" | "system" | "agent";
   message: string;
+  agent?: string;
   timestamp: Date;
 }
+
+const AGENT_COLORS: Record<string, string> = {
+  zeus: "#f59e0b", hermes: "#14b8a6", athena: "#8b5cf6", apollo: "#f97316",
+  artemis: "#10b981", ares: "#ef4444", hera: "#d946ef", meridian: "#00d4ff",
+  chicago: "#3b82f6", flexport: "#f59e0b", clio: "#a3e635",
+  poseidon: "#38bdf8", iris: "#fb7185",
+};
 
 interface AmbientToastProps {
   notifications: Notification[];
@@ -20,8 +28,8 @@ export default function AmbientToast({ notifications, onDismiss }: AmbientToastP
     <div className="fixed bottom-6 right-6 z-60 flex flex-col gap-2 pointer-events-none">
       <AnimatePresence>
         {notifications.slice(0, 3).map((note) => {
-          const Icon = note.type === "gmail" ? Mail : Calendar;
-          const color = note.type === "gmail" ? "#14b8a6" : "#f97316";
+          const Icon = note.type === "gmail" ? Mail : note.type === "calendar" ? Calendar : note.type === "task" ? Target : note.type === "system" ? AlertTriangle : Zap;
+          const color = note.agent ? (AGENT_COLORS[note.agent] || "#64748b") : (note.type === "gmail" ? "#14b8a6" : "#f97316");
 
           return (
             <motion.div

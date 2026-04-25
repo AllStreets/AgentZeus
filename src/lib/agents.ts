@@ -54,7 +54,7 @@ export const agents: AgentInfo[] = [
     displayName: "Hera",
     domain: "Memory & Knowledge",
     description: "Notes, bookmarks, and semantic search",
-    color: "#f43f5e",
+    color: "#d946ef",
     icon: "brain",
   },
   {
@@ -80,6 +80,30 @@ export const agents: AgentInfo[] = [
     description: "Prospects, pipeline, trade signals, vessels",
     color: "#f59e0b",
     icon: "trending-up",
+  },
+  {
+    name: "clio",
+    displayName: "Clio",
+    domain: "Voice Notes",
+    description: "Record, transcribe, and summarize voice notes",
+    color: "#a3e635",
+    icon: "pen",
+  },
+  {
+    name: "poseidon",
+    displayName: "Poseidon",
+    domain: "Web Intelligence",
+    description: "Web scraping, research, link analysis, and deep search",
+    color: "#38bdf8",
+    icon: "anchor",
+  },
+  {
+    name: "iris",
+    displayName: "Iris",
+    domain: "Screen & Vision",
+    description: "Screenshot analysis, OCR, visual understanding, and screen context",
+    color: "#fb7185",
+    icon: "eye",
   },
 ];
 

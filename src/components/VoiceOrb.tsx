@@ -224,26 +224,25 @@ export default function VoiceOrb({ isListening, isSpeaking, isProcessing, onClic
   return (
     <div className="relative flex flex-col items-center gap-5">
       <div className="relative" style={{ width: 180, height: 180 }}>
-        <ParticleField isActive={isActive} color={stateColor} size={180} />
-
-        {/* Audio-reactive outer rings */}
+        {/* Audio-reactive outer rings — extend outside this div */}
         {[0, 1, 2].map((i) => (
           <AudioRing key={i} color={stateColor} isActive={isActive} ringIndex={i} />
         ))}
 
-        {/* Main orb */}
+        {/* Main orb — fills full container, blue border at outer edge */}
         <motion.button
           ref={orbRef}
           onClick={onClick}
-          className="absolute inset-6 rounded-full cursor-pointer overflow-hidden"
+          className="absolute inset-0 rounded-full cursor-pointer overflow-hidden"
           style={{
             background: `radial-gradient(circle at 38% 32%, ${stateColor}${isActive ? "22" : "0c"} 0%, #060b18 65%)`,
-            border: `1px solid ${stateColor}${isActive ? "35" : "14"}`,
+            border: `1.5px solid ${stateColor}${isActive ? "60" : "30"}`,
           }}
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.95 }}
           aria-label={statusText}
         >
+          <ParticleField isActive={isActive} color={stateColor} size={180} />
           <OracleWaves
             isListening={isListening}
             isSpeaking={isSpeaking}

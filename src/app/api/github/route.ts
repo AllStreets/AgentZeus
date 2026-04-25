@@ -30,20 +30,24 @@ interface GitHubRepo {
   html_url: string;
 }
 
-async function ghFetch(path: string, token: string) {
+async function ghFetch(path: string, token: string, options: { method?: string; body?: string } = {}) {
   const res = await fetch(`https://api.github.com${path}`, {
+    method: options.method || "GET",
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
     },
+    ...(options.body ? { body: options.body } : {}),
   });
   if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 export async function POST(req: NextRequest) {
-  const { token, action } = await req.json();
+  const body = await req.json();
+  const { token, action } = body;
 
   if (!token) return NextResponse.json({ error: "No token provided" }, { status: 400 });
 
@@ -86,6 +90,42 @@ export async function POST(req: NextRequest) {
       }));
 
       return NextResponse.json({ login, prs, issues, repos });
+    }
+
+    if (action === "commits") {
+      const user: GitHubUser = await ghFetch("/user", token);
+      const reposRaw: GitHubRepo[] = await ghFetch(`/user/repos?sort=pushed&per_page=5`, token);
+
+      const commitsByRepo = await Promise.all(
+        reposRaw.map(async (repo) => {
+          try {
+            const commits = await ghFetch(
+              `/repos/${repo.full_name}/commits?author=${user.login}&per_page=5`,
+              token
+            );
+            return (commits as Array<{ sha: string; commit: { message: string; author: { date: string } }; html_url: string }>).map((c) => ({
+              sha: c.sha.slice(0, 7),
+              message: c.commit.message.split("\n")[0],
+              repo: repo.full_name,
+              date: c.commit.author.date,
+              url: c.html_url,
+              age: Math.floor((Date.now() - new Date(c.commit.author.date).getTime()) / 86400000),
+            }));
+          } catch { return []; }
+        })
+      );
+
+      const commits = commitsByRepo.flat().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 20);
+      return NextResponse.json({ commits });
+    }
+
+    if (action === "create_issue") {
+      const { repo, title, body: issueBody } = body as { repo: string; title: string; body?: string };
+      const issue = await ghFetch(`/repos/${repo}/issues`, token, {
+        method: "POST",
+        body: JSON.stringify({ title, body: issueBody || "" }),
+      });
+      return NextResponse.json({ url: issue.html_url, number: issue.number });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
