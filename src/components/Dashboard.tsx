@@ -63,20 +63,28 @@ export default function Dashboard() {
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
-  // Fires BEFORE the server responds — opens panels and external apps instantly
+  // Fires BEFORE the server responds — opens panels instantly on keyword match
   const handleOptimisticActions = useCallback((text: string) => {
     const t = text.toLowerCase();
-    const wantsOpen = /\bopen\b|\blaunch\b|\bshow me\b/.test(t);
 
     if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
       setOpenPanel("meridian");
-      if (wantsOpen) window.open("http://localhost:8080", "_blank", "noopener,noreferrer");
     } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
       setOpenPanel("chicago");
-      if (wantsOpen) window.open("http://localhost:5173", "_blank", "noopener,noreferrer");
     } else if (/\bflexport\b|\bpipeline\b|\bprospects?\b|\bvessel\b|\bhot leads?\b/.test(t)) {
       setOpenPanel("flexport");
-      if (wantsOpen) window.open("http://localhost:5174", "_blank", "noopener,noreferrer");
+    } else if (/\bhermes\b|\bemail\b|\bmail\b|\binbox\b|\bslack\b/.test(t)) {
+      setOpenPanel("hermes");
+    } else if (/\bathena\b|\bgithub\b|\bcode\b|\bpull request\b|\bpr\b/.test(t)) {
+      setOpenPanel("athena");
+    } else if (/\bapollo\b|\bcalendar\b|\bschedule\b|\bmeeting\b/.test(t)) {
+      setOpenPanel("apollo");
+    } else if (/\bartemis\b|\btasks?\b|\btodo\b|\breminder\b/.test(t)) {
+      setOpenPanel("artemis");
+    } else if (/\bares\b|\bdeployment\b|\bvercel\b|\bdevops\b|\bserver\b/.test(t)) {
+      setOpenPanel("ares");
+    } else if (/\bhera\b|\bnotes?\b|\bmemory\b|\bremember\b/.test(t)) {
+      setOpenPanel("hera");
     }
   }, []);
 
