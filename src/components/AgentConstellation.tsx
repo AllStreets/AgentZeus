@@ -134,30 +134,37 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Hera: brain icon (matches panel) ────────────────────────────────────
+    // ── Hera: detailed brain with gyri folds ────────────────────────────────
     case "hera":
       return (
         <svg viewBox="0 0 80 80" width={84} height={84}>
-          {/* Brain left hemisphere */}
-          <path d="M 40 12 Q 18 12 14 30 Q 10 48 22 56 Q 16 60 20 68 Q 24 76 34 72 Q 38 70 40 66"
+          {/* Left hemisphere — organic rounded shape with lobes */}
+          <path d="M 40 10 C 34 8, 22 10, 16 18 C 10 26, 8 34, 10 42 C 12 50, 16 56, 22 60 C 26 62, 30 66, 34 68 C 37 69, 39 68, 40 64"
             {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Brain right hemisphere */}
-          <path d="M 40 12 Q 62 12 66 30 Q 70 48 58 56 Q 64 60 60 68 Q 56 76 46 72 Q 42 70 40 66"
+          {/* Right hemisphere */}
+          <path d="M 40 10 C 46 8, 58 10, 64 18 C 70 26, 72 34, 70 42 C 68 50, 64 56, 58 60 C 54 62, 50 66, 46 68 C 43 69, 41 68, 40 64"
             {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Central fissure */}
-          <line x1="40" y1="12" x2="40" y2="66" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.5} />
-          {/* Left sulci */}
-          <path d="M 18 34 Q 28 30 36 36" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" strokeLinecap="round" />
-          <path d="M 22 48 Q 30 44 38 50" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
-          {/* Right sulci */}
-          <path d="M 62 34 Q 52 30 44 36" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" strokeLinecap="round" />
-          <path d="M 58 48 Q 50 44 42 50" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
-          {/* Stem */}
-          <path d="M 40 66 L 40 76" stroke={color} strokeWidth="2" strokeOpacity={so} strokeLinecap="round" />
+          {/* Central fissure — slightly wavy for realism */}
+          <path d="M 40 10 Q 39 24 40 38 Q 41 52 40 64" stroke={color} strokeWidth="1.2" strokeOpacity={so * 0.55} fill="none" />
+          {/* Left gyri folds — curved lines suggesting brain wrinkles */}
+          <path d="M 14 28 Q 22 22 32 26 Q 36 28 38 32" stroke={color} strokeWidth="1.3" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          <path d="M 12 40 Q 20 34 30 38 Q 35 40 38 44" stroke={color} strokeWidth="1.1" strokeOpacity={so * 0.4} fill="none" strokeLinecap="round" />
+          <path d="M 16 52 Q 24 46 32 50 Q 36 52 38 56" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.35} fill="none" strokeLinecap="round" />
+          {/* Right gyri folds — mirrored but slightly offset for organic feel */}
+          <path d="M 66 28 Q 58 22 48 26 Q 44 28 42 32" stroke={color} strokeWidth="1.3" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          <path d="M 68 40 Q 60 34 50 38 Q 45 40 42 44" stroke={color} strokeWidth="1.1" strokeOpacity={so * 0.4} fill="none" strokeLinecap="round" />
+          <path d="M 64 52 Q 56 46 48 50 Q 44 52 42 56" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.35} fill="none" strokeLinecap="round" />
+          {/* Brainstem */}
+          <path d="M 36 64 Q 38 70 40 74 Q 42 70 44 64" stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} fill={color} fillOpacity={fo * 0.8} strokeLinecap="round" />
+          {/* Neural glow dots at fold intersections */}
+          <circle cx="26" cy="26" r="1.5" fill={color} fillOpacity={dot * 0.5} />
+          <circle cx="54" cy="26" r="1.5" fill={color} fillOpacity={dot * 0.5} />
+          <circle cx="22" cy="42" r="1.5" fill={color} fillOpacity={dot * 0.4} />
+          <circle cx="58" cy="42" r="1.5" fill={color} fillOpacity={dot * 0.4} />
         </svg>
       );
 
-    // ── Meridian: globe with accurate continent silhouettes and location pin ─
+    // ── Meridian: globe with realistic continent silhouettes and location pin ─
     case "meridian":
       return (
         <svg viewBox="0 0 80 80" width={84} height={84}>
@@ -167,45 +174,52 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
           <circle cx="40" cy="40" r="34" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
           <g clipPath="url(#globe-clip)">
             {/* Subtle grid */}
-            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.2} />
-            <path d="M 9 27 Q 40 18 71 27" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.15} fill="none" />
-            <path d="M 9 53 Q 40 62 71 53" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.15} fill="none" />
-            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.2} fill="none" />
+            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.15} />
+            <path d="M 8 28 Q 40 20 72 28" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.12} fill="none" />
+            <path d="M 8 52 Q 40 60 72 52" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.12} fill="none" />
+            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.15} fill="none" />
 
-            {/* North America — wider at top (Canada), narrows through US, thin Central America */}
-            <path d="M 12 24 L 14 22 L 18 20 L 22 19 L 26 20 L 28 22 L 27 24 L 29 25 L 28 27 L 26 26 L 24 28 L 25 30 L 23 32 L 24 34 L 22 36 L 20 35 L 19 37 L 20 39 L 18 40 L 17 38 L 15 36 L 13 34 L 11 30 L 10 27 Z"
-              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+            {/* North America — Alaska hook, wide Canada, Great Lakes indent, Florida peninsula, Mexico tapering to Central America isthmus */}
+            <path d="M 8 22 C 9 20, 11 18, 13 19 C 14 17, 16 16, 18 17 L 20 16 L 23 17 L 26 18 L 28 17 L 29 19 L 28 21 L 30 22 L 29 24 L 27 23 L 25 24 C 26 26, 27 27, 26 29 L 24 28 L 23 30 L 25 32 L 24 34 L 22 33 L 20 35 L 21 37 C 22 38, 23 39, 22 40 L 20 39 L 19 41 L 20 42 L 18 42 L 17 40 L 15 38 L 13 36 L 11 32 L 10 28 L 9 25 Z"
+              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.45} strokeLinejoin="round" />
 
-            {/* South America — wide at top (Brazil), tapers to southern tip */}
-            <path d="M 20 43 L 22 42 L 25 43 L 27 45 L 28 48 L 29 51 L 28 54 L 27 57 L 25 60 L 23 63 L 21 65 L 20 63 L 19 60 L 18 56 L 17 52 L 18 48 L 19 45 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+            {/* South America — broad Brazil shoulder, Amazon coast bulge, tapers through Argentina to Tierra del Fuego */}
+            <path d="M 20 44 C 22 43, 24 42, 26 43 C 27 43, 28 44, 29 46 C 30 47, 30 49, 29 51 L 28 48 L 29 50 C 29 53, 28 55, 27 57 C 26 59, 25 61, 24 63 C 23 64, 22 65, 21 66 C 20 66, 19 65, 19 63 L 18 60 L 17 56 L 16 52 L 17 48 L 18 46 L 19 45 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
 
-            {/* Europe — irregular western coast, Scandinavia, Iberia, Italy, Balkans */}
-            <path d="M 36 18 L 38 17 L 40 18 L 42 17 L 44 18 L 43 20 L 45 21 L 44 23 L 46 24 L 45 26 L 43 25 L 41 26 L 40 28 L 38 29 L 36 28 L 37 30 L 36 32 L 38 33 L 37 35 L 35 34 L 34 31 L 33 28 L 34 25 L 33 22 L 35 20 Z"
-              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+            {/* Europe — Scandinavian peninsula, British Isles dot, Iberian peninsula, Italian boot, Balkans */}
+            <path d="M 35 16 C 36 15, 37 14, 39 15 L 41 14 L 43 15 C 44 15, 45 16, 44 18 L 46 18 C 47 19, 47 21, 46 22 L 44 21 L 43 23 C 44 24, 45 25, 44 27 L 42 26 C 41 27, 40 28, 39 29 L 37 28 C 37 29, 38 30, 37 31 L 38 32 L 37 34 C 36 34, 35 33, 34 32 L 34 30 L 33 27 L 34 24 L 33 21 L 34 19 Z"
+              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.45} strokeLinejoin="round" />
+            {/* British Isles */}
+            <ellipse cx="32" cy="20" rx="2" ry="3" fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.35} />
 
-            {/* Africa — wide at Sahara, bulge of West Africa, Horn of East Africa, narrows south */}
-            <path d="M 34 35 L 36 34 L 39 35 L 42 34 L 45 35 L 48 36 L 50 38 L 49 40 L 50 42 L 48 44 L 47 42 L 45 43 L 46 46 L 45 49 L 44 52 L 42 55 L 40 58 L 38 60 L 37 58 L 36 55 L 35 51 L 34 48 L 33 44 L 32 40 L 33 37 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+            {/* Africa — Mediterranean coast, West African bulge, Horn of East Africa, Great Rift narrowing, Cape */}
+            <path d="M 33 34 C 35 33, 37 34, 39 33 L 42 34 C 44 34, 46 35, 48 36 L 50 37 C 51 38, 51 40, 50 41 L 51 43 C 50 44, 49 43, 48 44 L 47 42 C 46 43, 46 45, 47 47 C 47 49, 46 51, 45 53 C 44 55, 43 57, 42 58 C 41 60, 40 61, 39 61 C 38 61, 37 60, 37 58 L 36 55 L 35 52 L 34 48 L 33 44 L 32 40 L 32 37 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
+            {/* Madagascar */}
+            <path d="M 50 52 L 51 50 L 52 52 L 51 55 Z" fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.3" strokeOpacity={so * 0.3} />
 
-            {/* Asia — massive landmass, extends from Middle East through Siberia to East Asia */}
-            <path d="M 48 18 L 52 16 L 56 15 L 60 16 L 64 18 L 67 20 L 68 23 L 66 25 L 68 27 L 67 30 L 64 29 L 62 31 L 64 33 L 62 35 L 58 34 L 56 36 L 54 35 L 52 33 L 50 35 L 48 33 L 47 30 L 48 27 L 46 25 L 48 22 L 47 20 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
-            {/* India peninsula */}
-            <path d="M 54 36 L 56 38 L 55 41 L 53 44 L 51 42 L 52 39 L 53 37 Z"
-              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
-            {/* Southeast Asia / Indonesia arc */}
-            <path d="M 60 36 L 62 38 L 64 37 L 66 39 L 68 38 L 67 41 L 64 42 L 62 41 L 60 40 L 58 38 Z"
-              fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.3} />
+            {/* Asia — Middle East, Central Asia plateau, Siberia, Korea/Japan peninsula, Kamchatka */}
+            <path d="M 48 20 C 50 18, 53 16, 56 15 L 59 14 C 62 14, 65 16, 67 18 C 69 20, 70 22, 69 25 L 71 26 C 71 28, 70 30, 68 30 L 66 29 C 65 30, 64 32, 65 34 L 63 35 C 61 34, 59 35, 58 34 L 56 36 C 54 35, 52 34, 51 33 L 49 34 L 48 32 L 47 29 L 48 26 L 47 23 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} strokeLinejoin="round" />
+            {/* India — triangular peninsula */}
+            <path d="M 53 36 C 55 36, 56 37, 57 39 C 57 41, 56 43, 54 45 C 53 44, 52 42, 51 40 C 51 38, 52 37, 53 36 Z"
+              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.35} />
+            {/* Southeast Asia + Indonesia archipelago */}
+            <path d="M 60 36 C 62 37, 63 36, 64 38 L 66 37 C 67 38, 67 40, 66 41 L 63 40 L 61 39 Z"
+              fill={color} fillOpacity={fo * 1.5} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.3} />
+            {/* Japan arc */}
+            <path d="M 68 24 C 69 22, 71 23, 70 26 C 69 28, 68 27, 68 24 Z"
+              fill={color} fillOpacity={fo * 1.4} stroke={color} strokeWidth="0.3" strokeOpacity={so * 0.3} />
 
-            {/* Australia */}
-            <path d="M 60 50 L 64 48 L 68 49 L 70 52 L 69 55 L 66 57 L 63 56 L 60 54 L 59 52 Z"
+            {/* Australia — distinctive shape with Gulf of Carpentaria indent */}
+            <path d="M 60 49 C 63 47, 66 47, 69 49 C 71 50, 72 53, 71 55 C 70 57, 68 58, 66 58 C 64 58, 62 57, 60 55 C 59 53, 58 51, 60 49 Z"
               fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
           </g>
           {/* Location pin on Europe */}
-          <circle cx="40" cy="26" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
-          <circle cx="40" cy="26" r="1.2" fill={color} fillOpacity={dot} />
-          <path d="M 40 29 L 38 33 L 42 33 Z" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="40" cy="24" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
+          <circle cx="40" cy="24" r="1.2" fill={color} fillOpacity={dot} />
+          <path d="M 40 27 L 38 31 L 42 31 Z" fill={color} fillOpacity={dot * 0.7} />
         </svg>
       );
 
