@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Check, Trash2, Circle } from "lucide-react";
+import { Plus, Check, Trash2, Circle, Clock } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Task } from "@/types";
 
@@ -99,9 +99,10 @@ export default function ArtemisPanel() {
                 <button
                   onClick={() => toggleTask(task)}
                   className="mt-0.5 shrink-0 transition-colors"
-                  style={{ color: task.status === "completed" ? "#10b981" : "#334155" }}
+                  title={task.status === "pending" ? "Start" : task.status === "in_progress" ? "Complete" : "Reset"}
+                  style={{ color: task.status === "completed" ? "#10b981" : task.status === "in_progress" ? "#f59e0b" : "#334155" }}
                 >
-                  {task.status === "completed" ? <Check size={15} /> : <Circle size={15} />}
+                  {task.status === "completed" ? <Check size={15} /> : task.status === "in_progress" ? <Clock size={15} /> : <Circle size={15} />}
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm leading-snug ${task.status === "completed" ? "line-through text-slate-500" : "text-slate-200"}`}>

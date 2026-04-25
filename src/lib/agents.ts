@@ -95,7 +95,7 @@ export const agents: AgentInfo[] = [
     domain: "Web Intelligence",
     description: "Web scraping, research, link analysis, and deep search",
     color: "#38bdf8",
-    icon: "anchor",
+    icon: "search",
   },
   {
     name: "iris",

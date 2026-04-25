@@ -134,21 +134,30 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Hera: organic oval with brainwave lines ───────────────────────────────
+    // ── Hera: brain icon (matches panel) ────────────────────────────────────
     case "hera":
       return (
-        <svg viewBox="0 0 80 72" width={84} height={76}>
-          <ellipse cx="40" cy="36" rx="34" ry="28" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Brainwave 1 */}
-          <path d="M 10 30 Q 16 18 22 30 Q 28 42 34 30 Q 40 18 46 30 Q 52 42 58 30 Q 63 22 70 30"
-            stroke={color} strokeWidth="1.8" strokeOpacity={so} fill="none" strokeLinecap="round" />
-          {/* Brainwave 2 */}
-          <path d="M 10 43 Q 16 31 22 43 Q 28 55 34 43 Q 40 31 46 43 Q 52 55 58 43 Q 63 35 70 43"
-            stroke={color} strokeWidth="1.2" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+        <svg viewBox="0 0 80 80" width={84} height={84}>
+          {/* Brain left hemisphere */}
+          <path d="M 40 12 Q 18 12 14 30 Q 10 48 22 56 Q 16 60 20 68 Q 24 76 34 72 Q 38 70 40 66"
+            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Brain right hemisphere */}
+          <path d="M 40 12 Q 62 12 66 30 Q 70 48 58 56 Q 64 60 60 68 Q 56 76 46 72 Q 42 70 40 66"
+            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Central fissure */}
+          <line x1="40" y1="12" x2="40" y2="66" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.5} />
+          {/* Left sulci */}
+          <path d="M 18 34 Q 28 30 36 36" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" strokeLinecap="round" />
+          <path d="M 22 48 Q 30 44 38 50" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
+          {/* Right sulci */}
+          <path d="M 62 34 Q 52 30 44 36" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.55} fill="none" strokeLinecap="round" />
+          <path d="M 58 48 Q 50 44 42 50" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
+          {/* Stem */}
+          <path d="M 40 66 L 40 76" stroke={color} strokeWidth="2" strokeOpacity={so} strokeLinecap="round" />
         </svg>
       );
 
-    // ── Meridian: globe with continent silhouettes and location pin ─────────
+    // ── Meridian: globe with accurate continent silhouettes and location pin ─
     case "meridian":
       return (
         <svg viewBox="0 0 80 80" width={84} height={84}>
@@ -157,25 +166,46 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
           </defs>
           <circle cx="40" cy="40" r="34" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
           <g clipPath="url(#globe-clip)">
-            {/* Grid lines */}
-            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.3} />
-            <path d="M 9 27 Q 40 18 71 27" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.25} fill="none" />
-            <path d="M 9 53 Q 40 62 71 53" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.25} fill="none" />
-            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.3} fill="none" />
-            {/* Europe/Africa silhouette */}
-            <path d="M 36 18 L 38 20 L 40 19 L 42 21 L 41 24 L 43 26 L 42 28 L 44 30 L 43 33 L 45 35 L 44 38 L 42 37 L 40 39 L 41 42 L 39 44 L 40 48 L 38 52 L 36 50 L 35 46 L 37 43 L 35 40 L 33 38 L 34 34 L 32 30 L 34 26 L 33 22 Z"
-              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.4} />
-            {/* Americas silhouette (left side) */}
-            <path d="M 20 22 L 22 24 L 24 23 L 25 26 L 23 29 L 24 32 L 22 35 L 23 38 L 21 40 L 22 44 L 20 47 L 21 50 L 19 53 L 17 51 L 18 47 L 16 44 L 17 40 L 15 37 L 17 33 L 16 29 L 18 25 Z"
+            {/* Subtle grid */}
+            <line x1="6" y1="40" x2="74" y2="40" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.2} />
+            <path d="M 9 27 Q 40 18 71 27" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.15} fill="none" />
+            <path d="M 9 53 Q 40 62 71 53" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.15} fill="none" />
+            <ellipse cx="40" cy="40" rx="14" ry="34" stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.2} fill="none" />
+
+            {/* North America — wider at top (Canada), narrows through US, thin Central America */}
+            <path d="M 12 24 L 14 22 L 18 20 L 22 19 L 26 20 L 28 22 L 27 24 L 29 25 L 28 27 L 26 26 L 24 28 L 25 30 L 23 32 L 24 34 L 22 36 L 20 35 L 19 37 L 20 39 L 18 40 L 17 38 L 15 36 L 13 34 L 11 30 L 10 27 Z"
+              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+
+            {/* South America — wide at top (Brazil), tapers to southern tip */}
+            <path d="M 20 43 L 22 42 L 25 43 L 27 45 L 28 48 L 29 51 L 28 54 L 27 57 L 25 60 L 23 63 L 21 65 L 20 63 L 19 60 L 18 56 L 17 52 L 18 48 L 19 45 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+
+            {/* Europe — irregular western coast, Scandinavia, Iberia, Italy, Balkans */}
+            <path d="M 36 18 L 38 17 L 40 18 L 42 17 L 44 18 L 43 20 L 45 21 L 44 23 L 46 24 L 45 26 L 43 25 L 41 26 L 40 28 L 38 29 L 36 28 L 37 30 L 36 32 L 38 33 L 37 35 L 35 34 L 34 31 L 33 28 L 34 25 L 33 22 L 35 20 Z"
+              fill={color} fillOpacity={fo * 2.2} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+
+            {/* Africa — wide at Sahara, bulge of West Africa, Horn of East Africa, narrows south */}
+            <path d="M 34 35 L 36 34 L 39 35 L 42 34 L 45 35 L 48 36 L 50 38 L 49 40 L 50 42 L 48 44 L 47 42 L 45 43 L 46 46 L 45 49 L 44 52 L 42 55 L 40 58 L 38 60 L 37 58 L 36 55 L 35 51 L 34 48 L 33 44 L 32 40 L 33 37 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+
+            {/* Asia — massive landmass, extends from Middle East through Siberia to East Asia */}
+            <path d="M 48 18 L 52 16 L 56 15 L 60 16 L 64 18 L 67 20 L 68 23 L 66 25 L 68 27 L 67 30 L 64 29 L 62 31 L 64 33 L 62 35 L 58 34 L 56 36 L 54 35 L 52 33 L 50 35 L 48 33 L 47 30 L 48 27 L 46 25 L 48 22 L 47 20 Z"
+              fill={color} fillOpacity={fo * 2.0} stroke={color} strokeWidth="0.6" strokeOpacity={so * 0.4} />
+            {/* India peninsula */}
+            <path d="M 54 36 L 56 38 L 55 41 L 53 44 L 51 42 L 52 39 L 53 37 Z"
               fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
-            {/* Asia silhouette (right side) */}
-            <path d="M 48 22 L 52 24 L 56 23 L 60 26 L 58 28 L 62 30 L 60 33 L 56 32 L 54 35 L 56 38 L 54 40 L 50 38 L 48 36 L 46 33 L 48 28 L 46 25 Z"
-              fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
+            {/* Southeast Asia / Indonesia arc */}
+            <path d="M 60 36 L 62 38 L 64 37 L 66 39 L 68 38 L 67 41 L 64 42 L 62 41 L 60 40 L 58 38 Z"
+              fill={color} fillOpacity={fo * 1.6} stroke={color} strokeWidth="0.4" strokeOpacity={so * 0.3} />
+
+            {/* Australia */}
+            <path d="M 60 50 L 64 48 L 68 49 L 70 52 L 69 55 L 66 57 L 63 56 L 60 54 L 59 52 Z"
+              fill={color} fillOpacity={fo * 1.8} stroke={color} strokeWidth="0.5" strokeOpacity={so * 0.35} />
           </g>
           {/* Location pin on Europe */}
-          <circle cx="42" cy="28" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
-          <circle cx="42" cy="28" r="1.2" fill={color} fillOpacity={dot} />
-          <path d="M 42 31 L 40 35 L 44 35 Z" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="40" cy="26" r="3" stroke={color} strokeWidth="1.2" strokeOpacity={so} fill={color} fillOpacity={dot * 0.6} />
+          <circle cx="40" cy="26" r="1.2" fill={color} fillOpacity={dot} />
+          <path d="M 40 29 L 38 33 L 42 33 Z" fill={color} fillOpacity={dot * 0.7} />
         </svg>
       );
 
@@ -252,26 +282,34 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Poseidon: trident over waves ──────────────────────────────────────────
+    // ── Poseidon: magnifying glass over interconnected web nodes ─────────────
     case "poseidon":
       return (
-        <svg viewBox="0 0 76 80" width={80} height={84}>
-          {/* Shield/droplet shape */}
-          <path d="M 38 4 Q 68 20 68 48 Q 68 72 38 76 Q 8 72 8 48 Q 8 20 38 4 Z"
-            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Trident shaft */}
-          <line x1="38" y1="18" x2="38" y2="62" stroke={color} strokeWidth="2.2" strokeOpacity={so} strokeLinecap="round" />
-          {/* Trident prongs */}
-          <path d="M 24 30 L 24 18 L 27 22" stroke={color} strokeWidth="1.8" strokeOpacity={so} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 38 18 L 38 12" stroke={color} strokeWidth="1.8" strokeOpacity={so} strokeLinecap="round" />
-          <path d="M 52 30 L 52 18 L 49 22" stroke={color} strokeWidth="1.8" strokeOpacity={so} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Cross bar */}
-          <line x1="24" y1="30" x2="52" y2="30" stroke={color} strokeWidth="1.6" strokeOpacity={so * 0.8} strokeLinecap="round" />
-          {/* Waves */}
-          <path d="M 14 52 Q 22 46 30 52 Q 38 58 46 52 Q 54 46 62 52"
-            stroke={color} strokeWidth="1.6" strokeOpacity={so * 0.7} fill="none" strokeLinecap="round" />
-          <path d="M 16 60 Q 24 54 32 60 Q 40 66 48 60 Q 56 54 60 58"
-            stroke={color} strokeWidth="1.2" strokeOpacity={so * 0.45} fill="none" strokeLinecap="round" />
+        <svg viewBox="0 0 80 80" width={84} height={84}>
+          {/* Web network nodes */}
+          <circle cx="22" cy="24" r="3.5" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="56" cy="18" r="3.5" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="16" cy="52" r="3.5" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="48" cy="48" r="3.5" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="64" cy="40" r="3.5" fill={color} fillOpacity={dot * 0.7} />
+          <circle cx="36" cy="36" r="3.5" fill={color} fillOpacity={dot * 0.9} />
+          {/* Network connections */}
+          <line x1="22" y1="24" x2="56" y2="18" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="22" y1="24" x2="36" y2="36" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="22" y1="24" x2="16" y2="52" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="56" y1="18" x2="64" y2="40" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="56" y1="18" x2="36" y2="36" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="36" y1="36" x2="48" y2="48" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="36" y1="36" x2="16" y2="52" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="48" y1="48" x2="64" y2="40" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          <line x1="48" y1="48" x2="16" y2="52" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.35} />
+          {/* Magnifying glass */}
+          <circle cx="42" cy="38" r="18" stroke={color} strokeWidth={sw} strokeOpacity={so} fill={color} fillOpacity={fo * 0.6} />
+          <line x1="55" y1="51" x2="70" y2="70" stroke={color} strokeWidth="3" strokeOpacity={so} strokeLinecap="round" />
+          {/* Search highlight — inner ring */}
+          <circle cx="42" cy="38" r="10" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.4} fill="none" />
+          {/* Glint */}
+          <path d="M 32 30 Q 36 24 42 26" stroke={color} strokeWidth="1.4" strokeOpacity={so * 0.6} fill="none" strokeLinecap="round" />
         </svg>
       );
 

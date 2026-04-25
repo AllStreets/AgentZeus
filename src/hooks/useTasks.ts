@@ -48,7 +48,7 @@ export function useTasks() {
   }, []);
 
   const toggleTask = useCallback(async (task: Task) => {
-    const next = task.status === "completed" ? "pending" : "completed";
+    const next = task.status === "pending" ? "in_progress" : task.status === "in_progress" ? "completed" : "pending";
     return updateTask(task.id, { status: next });
   }, [updateTask]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Send, Code, Calendar, Target, Shield, Brain, Globe, MapPin, TrendingUp, Pen, Anchor, Eye } from "lucide-react";
+import { Zap, Send, Code, Calendar, Target, Shield, Brain, Globe, MapPin, TrendingUp, Pen, Search, Eye } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   zap: Zap,
@@ -14,7 +14,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
   "map-pin": MapPin,
   "trending-up": TrendingUp,
   pen: Pen,
-  anchor: Anchor,
+  search: Search,
   eye: Eye,
 };
 
