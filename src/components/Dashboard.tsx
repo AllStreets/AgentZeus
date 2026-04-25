@@ -63,16 +63,20 @@ export default function Dashboard() {
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
-  // Fires BEFORE the server responds — opens panels instantly on keyword match
+  // Fires BEFORE the server responds — opens panels and external apps instantly
   const handleOptimisticActions = useCallback((text: string) => {
     const t = text.toLowerCase();
 
     if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
       setOpenPanel("meridian");
+      // Always open the MERIDIAN app when the agent is invoked
+      window.open("http://localhost:8080", "_blank", "noopener,noreferrer");
     } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
       setOpenPanel("chicago");
+      window.open("http://localhost:5173", "_blank", "noopener,noreferrer");
     } else if (/\bflexport\b|\bpipeline\b|\bprospects?\b|\bvessel\b|\bhot leads?\b/.test(t)) {
       setOpenPanel("flexport");
+      window.open("http://localhost:5174", "_blank", "noopener,noreferrer");
     } else if (/\bhermes\b|\bemail\b|\bmail\b|\binbox\b|\bslack\b/.test(t)) {
       setOpenPanel("hermes");
     } else if (/\bathena\b|\bgithub\b|\bcode\b|\bpull request\b|\bpr\b/.test(t)) {

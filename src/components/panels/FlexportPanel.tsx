@@ -7,11 +7,13 @@ import { agentBus } from "@/lib/agentBus";
 
 const FLEXPORT_URL = "http://localhost:5174";
 
+// Route map: only use routes that actually exist in the Flexport app.
+// Prospects, Pipeline, and Signals all live on the home page "/".
 const PAGES = [
-  { id: "prospects",   label: "Prospects",   icon: Users,     color: "#f59e0b", keywords: ["prospect","lead","contact","account","who should i call","outreach","account"] },
-  { id: "pipeline",    label: "Pipeline",    icon: BarChart2, color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm"] },
+  { id: "",            label: "Prospects",   icon: Users,     color: "#f59e0b", keywords: ["prospect","lead","contact","account","who should i call","outreach"] },
+  { id: "",            label: "Pipeline",    icon: BarChart2, color: "#10b981", keywords: ["pipeline","deal","stage","kanban","close","opportunity","crm"] },
   { id: "vessels",     label: "Vessels",     icon: Ship,      color: "#0A84FF", keywords: ["vessel","ship","ocean","freight","cargo","container","shipping","port"] },
-  { id: "signals",     label: "Signals",     icon: Zap,       color: "#FF2D55", keywords: ["signal","news","alert","trigger","trade news","tariff news","indicator"] },
+  { id: "",            label: "Signals",     icon: Zap,       color: "#FF2D55", keywords: ["signal","news","alert","trigger","trade news","tariff news","indicator"] },
   { id: "performance", label: "Performance", icon: Activity,  color: "#BF5AF2", keywords: ["performance","kpi","quota","metrics","numbers","goal","target","attainment"] },
   { id: "trade",       label: "Trade",       icon: Target,    color: "#FF9F0A", keywords: ["tariff","hs code","duty","tax","trade","import","export","globe","map"] },
 ];
@@ -28,12 +30,12 @@ async function askZeus(query: string): Promise<string | null> {
   } catch { return null; }
 }
 
-function detectPage(text: string): string | null {
+function detectPage(text: string): string | undefined {
   const lower = text.toLowerCase();
   for (const page of PAGES) {
     if (page.keywords.some((kw) => lower.includes(kw))) return page.id;
   }
-  return null;
+  return undefined;
 }
 
 export default function FlexportPanel() {
@@ -44,7 +46,9 @@ export default function FlexportPanel() {
 
   function openPage(page: string) {
     setActivePage(page);
-    window.open(`${FLEXPORT_URL}/${page}`, "_blank", "noopener,noreferrer");
+    // Empty string = home page (prospects/pipeline/signals all live on "/")
+    const url = page ? `${FLEXPORT_URL}/${page}` : FLEXPORT_URL;
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function handleQuickAsk(query: string) {
@@ -73,8 +77,8 @@ export default function FlexportPanel() {
       }
 
       // Navigate to the specific section that matches the query
-      const page = detectPage(transcript) || detectPage(agentResponse);
-      if (page) openPage(page);
+      const page = detectPage(transcript) ?? detectPage(agentResponse);
+      if (page !== undefined) openPage(page);
     });
   }, []);
 
