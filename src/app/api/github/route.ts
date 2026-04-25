@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       const login = user.login;
 
       const [prsRaw, issuesRaw, reposRaw] = await Promise.all([
-        ghFetch(`/search/issues?q=is:pr+is:open+assignee:${login}&per_page=10`, token),
+        ghFetch(`/search/issues?q=is:pr+is:open+author:${login}&per_page=10`, token),
         ghFetch(`/search/issues?q=is:issue+is:open+author:${login}&per_page=10`, token),
         ghFetch(`/user/repos?sort=pushed&per_page=8`, token),
       ]);

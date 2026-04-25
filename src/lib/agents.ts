@@ -55,7 +55,7 @@ export const agents: AgentInfo[] = [
     domain: "Memory & Knowledge",
     description: "Notes, bookmarks, and semantic search",
     color: "#d946ef",
-    icon: "brain",
+    icon: "cpu",
   },
   {
     name: "meridian",

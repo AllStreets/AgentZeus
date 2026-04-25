@@ -134,33 +134,29 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Hera: detailed brain with gyri folds ────────────────────────────────
+    // ── Hera: memory chip / IC chip ─────────────────────────────────────────
     case "hera":
       return (
         <svg viewBox="0 0 80 80" width={84} height={84}>
-          {/* Left hemisphere — organic rounded shape with lobes */}
-          <path d="M 40 10 C 34 8, 22 10, 16 18 C 10 26, 8 34, 10 42 C 12 50, 16 56, 22 60 C 26 62, 30 66, 34 68 C 37 69, 39 68, 40 64"
-            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Right hemisphere */}
-          <path d="M 40 10 C 46 8, 58 10, 64 18 C 70 26, 72 34, 70 42 C 68 50, 64 56, 58 60 C 54 62, 50 66, 46 68 C 43 69, 41 68, 40 64"
-            {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Central fissure — slightly wavy for realism */}
-          <path d="M 40 10 Q 39 24 40 38 Q 41 52 40 64" stroke={color} strokeWidth="1.2" strokeOpacity={so * 0.55} fill="none" />
-          {/* Left gyri folds — curved lines suggesting brain wrinkles */}
-          <path d="M 14 28 Q 22 22 32 26 Q 36 28 38 32" stroke={color} strokeWidth="1.3" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
-          <path d="M 12 40 Q 20 34 30 38 Q 35 40 38 44" stroke={color} strokeWidth="1.1" strokeOpacity={so * 0.4} fill="none" strokeLinecap="round" />
-          <path d="M 16 52 Q 24 46 32 50 Q 36 52 38 56" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.35} fill="none" strokeLinecap="round" />
-          {/* Right gyri folds — mirrored but slightly offset for organic feel */}
-          <path d="M 66 28 Q 58 22 48 26 Q 44 28 42 32" stroke={color} strokeWidth="1.3" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
-          <path d="M 68 40 Q 60 34 50 38 Q 45 40 42 44" stroke={color} strokeWidth="1.1" strokeOpacity={so * 0.4} fill="none" strokeLinecap="round" />
-          <path d="M 64 52 Q 56 46 48 50 Q 44 52 42 56" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.35} fill="none" strokeLinecap="round" />
-          {/* Brainstem */}
-          <path d="M 36 64 Q 38 70 40 74 Q 42 70 44 64" stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} fill={color} fillOpacity={fo * 0.8} strokeLinecap="round" />
-          {/* Neural glow dots at fold intersections */}
-          <circle cx="26" cy="26" r="1.5" fill={color} fillOpacity={dot * 0.5} />
-          <circle cx="54" cy="26" r="1.5" fill={color} fillOpacity={dot * 0.5} />
-          <circle cx="22" cy="42" r="1.5" fill={color} fillOpacity={dot * 0.4} />
-          <circle cx="58" cy="42" r="1.5" fill={color} fillOpacity={dot * 0.4} />
+          {/* Chip body */}
+          <rect x="16" y="16" width="48" height="48" rx="4" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Inner die */}
+          <rect x="26" y="26" width="28" height="28" rx="2" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} fill={color} fillOpacity={fo * 1.5} />
+          {/* Circuit traces on die */}
+          <path d="M 32 32 L 32 38 L 38 38" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          <path d="M 48 32 L 48 36 L 42 36 L 42 42" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          <path d="M 32 48 L 38 48 L 38 44" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          <path d="M 48 48 L 44 48 L 44 44" stroke={color} strokeWidth="1.0" strokeOpacity={so * 0.5} fill="none" strokeLinecap="round" />
+          {/* Center dot */}
+          <circle cx="40" cy="40" r="3" fill={color} fillOpacity={dot * 0.7} />
+          {/* Pins — top */}
+          {[26, 34, 42, 50].map(x => <line key={`t${x}`} x1={x} y1="16" x2={x} y2="6" stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} strokeLinecap="round" />)}
+          {/* Pins — bottom */}
+          {[26, 34, 42, 50].map(x => <line key={`b${x}`} x1={x} y1="64" x2={x} y2="74" stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} strokeLinecap="round" />)}
+          {/* Pins — left */}
+          {[26, 34, 42, 50].map(y => <line key={`l${y}`} x1="16" y1={y} x2="6" y2={y} stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} strokeLinecap="round" />)}
+          {/* Pins — right */}
+          {[26, 34, 42, 50].map(y => <line key={`r${y}`} x1="64" y1={y} x2="74" y2={y} stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.7} strokeLinecap="round" />)}
         </svg>
       );
 
