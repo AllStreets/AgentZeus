@@ -76,9 +76,9 @@ export default function FlexportPanel() {
       setResponse(agentResponse);
       setLastQuery(transcript);
 
-      // Navigate to the specific section that matches the query
+      // Highlight the matching section in the panel (Dashboard already opened the URL)
       const page = detectPage(transcript) ?? detectPage(agentResponse);
-      if (page !== undefined) openPage(page);
+      if (page !== undefined) setActivePage(page);
     });
   }, []);
 
