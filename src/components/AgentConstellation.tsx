@@ -47,9 +47,9 @@ function bezierPt(t: number, x0: number, y0: number, x1: number, y1: number, x2:
 
 // ─── Custom SVG art per agent ─────────────────────────────────────────────────
 function AgentArt({ name, color, lit, hover }: { name: string; color: string; lit: boolean; hover: boolean }) {
-  const so  = lit ? 0.92 : hover ? 0.6 : 0.28; // stroke opacity
-  const fo  = lit ? 0.22 : hover ? 0.12 : 0.06; // fill opacity
-  const dot = lit ? 0.75 : hover ? 0.4 : 0.2;   // accent dot opacity
+  const so  = lit ? 1.0  : hover ? 0.95 : 0.82; // stroke opacity — bright by default
+  const fo  = lit ? 0.28 : hover ? 0.22 : 0.15; // fill opacity
+  const dot = lit ? 0.85 : hover ? 0.75 : 0.55; // accent dot opacity
   const sw  = "1.4";
   const sw2 = "1.0";
 
@@ -361,13 +361,13 @@ function AgentNode({ agent, isLit, isHovered, onClick, onMouseEnter, onMouseLeav
           animate={{
             filter: isLit
               ? [
-                  `drop-shadow(0 0 6px ${agent.color}60)`,
-                  `drop-shadow(0 0 16px ${agent.color}90)`,
-                  `drop-shadow(0 0 6px ${agent.color}60)`,
+                  `drop-shadow(0 0 6px ${agent.color}70)`,
+                  `drop-shadow(0 0 18px ${agent.color}aa)`,
+                  `drop-shadow(0 0 6px ${agent.color}70)`,
                 ]
               : isHovered
-              ? `drop-shadow(0 0 8px ${agent.color}50)`
-              : "none",
+              ? `drop-shadow(0 0 10px ${agent.color}70)`
+              : `drop-shadow(0 0 4px ${agent.color}44)`,
           }}
           transition={{ duration: isLit ? 1.6 : 0.3, repeat: isLit ? Infinity : 0 }}
         >
@@ -377,7 +377,7 @@ function AgentNode({ agent, isLit, isHovered, onClick, onMouseEnter, onMouseLeav
 
       <motion.span className="font-mono tracking-widest"
         style={{ fontSize: 8, lineHeight: 1 }}
-        animate={{ color: isLit ? agent.color : isHovered ? "#94a3b8" : "#293a50" }}
+        animate={{ color: isLit ? agent.color : isHovered ? agent.color : `${agent.color}bb` }}
         transition={{ duration: 0.25 }}
       >
         {agent.displayName.toUpperCase()}
