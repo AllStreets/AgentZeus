@@ -60,7 +60,6 @@ export default function MeridianPanel() {
 
   async function handleCat(cat: string) {
     setActiveCat(cat);
-    setTimeout(() => setActiveCat("all"), 1500);
     flash(`Category → ${cat.toUpperCase()}`);
     await sendCmd("set_cat", { cat });
   }
@@ -72,11 +71,6 @@ export default function MeridianPanel() {
       return next;
     });
     flash(`Toggle → ${overlay}`);
-    setTimeout(() => setActiveOverlays(prev => {
-      const next = new Set(prev);
-      next.delete(overlay);
-      return next;
-    }), 1500);
     await sendCmd("toggle_overlay", { overlay });
   }
 

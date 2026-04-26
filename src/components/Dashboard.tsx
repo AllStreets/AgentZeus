@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   const { isProcessing, activeAgent, lastResponse, sendCommand } = useZeus();
   const [activeAgents, setActiveAgents] = useState<AgentName[]>([]);
-  const { isSpeaking, speak, unlockAudio } = useVoiceOutput();
+  const { isSpeaking, speak, stop: stopSpeaking, unlockAudio } = useVoiceOutput();
   const { events } = useAgentEvents(lastResponse?.session_id || null);
   const { notifications, dismiss } = useAmbientMonitor();
 
@@ -150,7 +150,7 @@ export default function Dashboard() {
     [sendCommand, speak]
   );
 
-  const { isListening, transcript, interimTranscript, toggleListening, isSupported } =
+  const { isListening, transcript, interimTranscript, startListening, stopListening, toggleListening, isSupported } =
     useVoiceInput(handleTranscript);
 
   // Clear illuminated lines when listening starts
@@ -215,7 +215,16 @@ export default function Dashboard() {
           isListening={isListening}
           isSpeaking={isSpeaking}
           isProcessing={isProcessing}
-          onOrbClick={() => { unlockAudio(); toggleListening(); }}
+          onOrbClick={() => {
+            unlockAudio();
+            if (isListening || isSpeaking || isProcessing) {
+              // Stop everything — listening, audio output, processing display
+              stopListening();
+              stopSpeaking();
+            } else {
+              startListening();
+            }
+          }}
           response={displayResponse}
           responseAgent={responseAgent}
           transcript={replayEntry ? replayEntry.transcript : transcript}
