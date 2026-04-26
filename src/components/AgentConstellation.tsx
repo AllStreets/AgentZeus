@@ -4,7 +4,6 @@ import { useAnimationFrame, motion, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 import { AgentInfo, AgentName } from "@/types";
 import VoiceOrb from "./VoiceOrb";
-import MeridianGlobe from "./MeridianGlobe";
 
 interface ConstellationProps {
   agents: AgentInfo[];
@@ -64,14 +63,28 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
   const F = { fill: color, fillOpacity: fo };
 
   switch (name) {
-    // ── Hermes: envelope with fold lines ────────────────────────────────────
+    // ── Hermes: cell tower with signal waves ───────────────────────────────
     case "hermes":
       return (
-        <svg viewBox="0 0 80 68" width={84} height={72}>
-          <rect x="6" y="14" width="68" height="46" rx="3" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          <path d="M 6 14 L 40 44 L 74 14" stroke={color} strokeWidth={sw} strokeOpacity={so} fill="none" strokeLinecap="round" />
-          <line x1="6" y1="60" x2="28" y2="40" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.5} />
-          <line x1="74" y1="60" x2="52" y2="40" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.5} />
+        <svg viewBox="0 0 80 80" width={84} height={84}>
+          {/* Tower mast */}
+          <line x1="40" y1="8" x2="40" y2="40" stroke={color} strokeWidth="2" strokeOpacity={so} />
+          <line x1="40" y1="40" x2="40" y2="72" stroke={color} strokeWidth="1.8" strokeOpacity={so * 0.5} />
+          {/* Antenna top */}
+          <rect x="36" y="4" width="8" height="6" rx="1" fill={color} fillOpacity={fo} stroke={color} strokeWidth={sw2} strokeOpacity={so} />
+          {/* Hub */}
+          <circle cx="40" cy="40" r="4" fill={color} fillOpacity={dot} />
+          {/* Left arm */}
+          <line x1="22" y1="28" x2="40" y2="40" stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          <line x1="14" y1="18" x2="22" y2="28" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
+          {/* Right arm */}
+          <line x1="58" y1="28" x2="40" y2="40" stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          <line x1="66" y1="18" x2="58" y2="28" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
+          {/* Signal waves */}
+          {[0,1,2].map(i => (
+            <path key={i} d={`M ${28+i*4} ${58+i*5} Q 40 ${52+i*5} ${52-i*4} ${58+i*5}`}
+              stroke={color} strokeWidth={sw2} strokeOpacity={so * (0.5 - i * 0.12)} fill="none" />
+          ))}
         </svg>
       );
 
@@ -89,37 +102,41 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Apollo: circle / calendar with clock hands ────────────────────────────
+    // ── Apollo: square calendar with tabs and date grid ────────────────────
     case "apollo":
       return (
         <svg viewBox="0 0 76 76" width={80} height={80}>
-          <circle cx="38" cy="38" r="32" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Top bar — clipped to circle boundary at y=26 */}
-          <line x1="9" y1="26" x2="67" y2="26" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.65} />
+          <rect x="8" y="14" width="60" height="54" rx="4" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Header bar */}
+          <line x1="8" y1="28" x2="68" y2="28" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.65} />
           {/* Calendar tabs */}
-          <line x1="24" y1="10" x2="24" y2="22" stroke={color} strokeWidth="2" strokeOpacity={so} />
-          <line x1="52" y1="10" x2="52" y2="22" stroke={color} strokeWidth="2" strokeOpacity={so} />
-          {/* Grid dots */}
-          {[18, 30, 42, 54].map(cx => [32, 44, 56].map(cy => (
-            <rect key={`${cx}-${cy}`} x={cx - 2} y={cy - 2} width={4} height={4} rx={1}
-              fill={color} fillOpacity={so * (cx === 18 && cy === 32 ? dot * 1.4 : dot * 0.8)} />
+          <line x1="24" y1="6" x2="24" y2="18" stroke={color} strokeWidth="2" strokeOpacity={so} strokeLinecap="round" />
+          <line x1="52" y1="6" x2="52" y2="18" stroke={color} strokeWidth="2" strokeOpacity={so} strokeLinecap="round" />
+          {/* Date grid */}
+          {[20, 32, 44, 56].map(cx => [36, 46, 56].map(cy => (
+            <rect key={`${cx}-${cy}`} x={cx - 2.5} y={cy - 2.5} width={5} height={5} rx={1}
+              fill={color} fillOpacity={so * (cx === 32 && cy === 46 ? dot * 1.6 : dot * 0.7)} />
           )))}
         </svg>
       );
 
-    // ── Artemis: upward triangle with target crosshair ───────────────────────
+    // ── Artemis: dartboard / target with concentric rings ──────────────────
     case "artemis":
       return (
-        <svg viewBox="0 0 78 74" width={82} height={78}>
-          <polygon points="39,4 74,70 4,70" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
-          {/* Target rings */}
-          <circle cx="39" cy="52" r="11" stroke={color} strokeWidth={sw2} strokeOpacity={so} fill="none" />
-          <circle cx="39" cy="52" r="4" fill={color} fillOpacity={dot} />
-          {/* Cross */}
-          <line x1="39" y1="37" x2="39" y2="43" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
-          <line x1="39" y1="61" x2="39" y2="67" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
-          <line x1="24" y1="52" x2="30" y2="52" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
-          <line x1="48" y1="52" x2="54" y2="52" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} />
+        <svg viewBox="0 0 80 80" width={84} height={84}>
+          {/* Outer ring */}
+          <circle cx="40" cy="40" r="32" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Middle ring */}
+          <circle cx="40" cy="40" r="21" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} fill="none" />
+          {/* Inner ring */}
+          <circle cx="40" cy="40" r="11" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.45} fill={color} fillOpacity={fo * 0.5} />
+          {/* Bullseye */}
+          <circle cx="40" cy="40" r="4" fill={color} fillOpacity={dot * 1.2} />
+          {/* Crosshair lines */}
+          <line x1="40" y1="2" x2="40" y2="14" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} />
+          <line x1="40" y1="66" x2="40" y2="78" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} />
+          <line x1="2" y1="40" x2="14" y2="40" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} />
+          <line x1="66" y1="40" x2="78" y2="40" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.6} />
         </svg>
       );
 
@@ -161,10 +178,32 @@ function AgentArt({ name, color, lit, hover }: { name: string; color: string; li
         </svg>
       );
 
-    // ── Meridian: globe with realistic continent silhouettes and location pin ─
+    // ── Meridian: satellite with solar panels and signal arcs ──────────────
     case "meridian":
       return (
-        <MeridianGlobe size={84} color={color} strokeOpacity={so} fillOpacity={fo} />
+        <svg viewBox="0 0 80 80" width={84} height={84}>
+          {/* Satellite body */}
+          <rect x="30" y="30" width="20" height="14" rx="2" {...F} stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          {/* Left solar panel arm + panel */}
+          <line x1="20" y1="37" x2="30" y2="37" stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          <rect x="6" y="28" width="14" height="18" rx="1.5" fill={color} fillOpacity={fo} stroke={color} strokeWidth={sw2} strokeOpacity={so} />
+          {/* Panel grid lines */}
+          <line x1="13" y1="28" x2="13" y2="46" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          <line x1="6" y1="37" x2="20" y2="37" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          {/* Right solar panel arm + panel */}
+          <line x1="50" y1="37" x2="60" y2="37" stroke={color} strokeWidth={sw} strokeOpacity={so} />
+          <rect x="60" y="28" width="14" height="18" rx="1.5" fill={color} fillOpacity={fo} stroke={color} strokeWidth={sw2} strokeOpacity={so} />
+          <line x1="67" y1="28" x2="67" y2="46" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          <line x1="60" y1="37" x2="74" y2="37" stroke={color} strokeWidth="0.8" strokeOpacity={so * 0.4} />
+          {/* Antenna */}
+          <line x1="40" y1="44" x2="40" y2="54" stroke={color} strokeWidth={sw2} strokeOpacity={so} />
+          <circle cx="40" cy="58" r="4" stroke={color} strokeWidth={sw2} strokeOpacity={so * 0.7} fill={color} fillOpacity={fo * 0.5} />
+          {/* Signal arcs (broadcasting downward) */}
+          {[0,1,2].map(i => (
+            <path key={i} d={`M ${52+i*5} ${22-i*5} A ${14+i*6} ${14+i*6} 0 0 0 ${28-i*5} ${22-i*5}`}
+              stroke={color} strokeWidth={sw2} strokeOpacity={so * (0.5 - i * 0.12)} fill="none" />
+          ))}
+        </svg>
       );
 
     // ── Chicago: city skyline silhouette ─────────────────────────────────────

@@ -46,7 +46,7 @@ export default function AgentSidebar({ activeAgent, agentMessages, onSelectAgent
             <div
               className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: `${agent.color}${isActive ? "18" : "08"}`,
+                backgroundColor: `${agent.color}${isActive ? "25" : "12"}`,
                 color: isActive ? agent.color : "#64748b",
               }}
             >
