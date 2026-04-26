@@ -14,6 +14,9 @@ export function useAmbientMonitor() {
   const [notifications, setNotifications] = useState<AmbientNotification[]>([]);
   const lastUnreadRef = useRef<number | null>(null);
   const lastEventCountRef = useRef<number | null>(null);
+  // Track which alert messages have been shown today (reset at midnight)
+  const shownAlertsRef = useRef<Set<string>>(new Set());
+  const alertDateRef = useRef<string>(new Date().toDateString());
 
   useEffect(() => {
     let cancelled = false;
@@ -57,10 +60,21 @@ export function useAmbientMonitor() {
 
       // Poll for proactive agent alerts (Artemis: overdue tasks, Ares: system health)
       try {
+        // Reset shown alerts at midnight
+        const today = new Date().toDateString();
+        if (today !== alertDateRef.current) {
+          shownAlertsRef.current = new Set();
+          alertDateRef.current = today;
+        }
+
         const res = await fetch("/api/alerts");
         const data = await res.json();
         for (const alert of data.alerts || []) {
-          addNotification(alert.type || "agent", alert.message, alert.agent);
+          // Only show each unique alert message once per day
+          if (!shownAlertsRef.current.has(alert.message)) {
+            shownAlertsRef.current.add(alert.message);
+            addNotification(alert.type || "agent", alert.message, alert.agent);
+          }
         }
       } catch {
         // silent — alerts endpoint may not exist yet
