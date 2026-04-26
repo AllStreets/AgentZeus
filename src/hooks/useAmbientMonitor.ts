@@ -14,9 +14,24 @@ export function useAmbientMonitor() {
   const [notifications, setNotifications] = useState<AmbientNotification[]>([]);
   const lastUnreadRef = useRef<number | null>(null);
   const lastEventCountRef = useRef<number | null>(null);
-  // Track which alert messages have been shown today (reset at midnight)
+  // Track which alert messages have been shown today — persisted in localStorage
+  // so duplicates don't reappear on page refresh
   const shownAlertsRef = useRef<Set<string>>(new Set());
-  const alertDateRef = useRef<string>(new Date().toDateString());
+  const alertDateRef = useRef<string>("");
+
+  // Hydrate from localStorage on mount
+  if (alertDateRef.current === "") {
+    try {
+      const stored = JSON.parse(localStorage.getItem("zeus_shown_alerts") || "{}");
+      const today = new Date().toDateString();
+      if (stored.date === today && Array.isArray(stored.messages)) {
+        shownAlertsRef.current = new Set(stored.messages);
+      }
+      alertDateRef.current = today;
+    } catch {
+      alertDateRef.current = new Date().toDateString();
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -65,16 +80,28 @@ export function useAmbientMonitor() {
         if (today !== alertDateRef.current) {
           shownAlertsRef.current = new Set();
           alertDateRef.current = today;
+          try { localStorage.removeItem("zeus_shown_alerts"); } catch {}
         }
 
         const res = await fetch("/api/alerts");
         const data = await res.json();
+        let added = false;
         for (const alert of data.alerts || []) {
           // Only show each unique alert message once per day
           if (!shownAlertsRef.current.has(alert.message)) {
             shownAlertsRef.current.add(alert.message);
             addNotification(alert.type || "agent", alert.message, alert.agent);
+            added = true;
           }
+        }
+        // Persist to localStorage so refreshes don't re-trigger
+        if (added) {
+          try {
+            localStorage.setItem("zeus_shown_alerts", JSON.stringify({
+              date: alertDateRef.current,
+              messages: [...shownAlertsRef.current],
+            }));
+          } catch { /* quota exceeded — non-fatal */ }
         }
       } catch {
         // silent — alerts endpoint may not exist yet
