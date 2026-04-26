@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 import { getGoogleToken } from "@/lib/googleAuth";
 import { getBaseUrl } from "@/lib/url";
 
@@ -125,7 +126,7 @@ Respond with JSON:
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   for (const action of content.actions || []) {
     if (action.type === "create_event" && action.data?.title && action.data?.start) {

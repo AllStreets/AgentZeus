@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
 
@@ -102,7 +103,7 @@ Speak naturally — you're a local expert. Mention specific details from the dat
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   Promise.resolve(supabase.from("agent_events").insert({
     session_id, agent_name: "chicago", event_type: "complete", content: content.response,

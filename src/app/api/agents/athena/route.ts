@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 import { getBaseUrl } from "@/lib/url";
 
 interface RunParams { intent: string; transcript: string; session_id: string; github_token?: string }
@@ -45,7 +46,7 @@ Respond with JSON:
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   Promise.resolve(supabase.from("agent_events").insert({
     session_id, agent_name: "athena", event_type: "complete", content: content.response,

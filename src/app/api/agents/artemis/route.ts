@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
 
@@ -43,7 +44,7 @@ Keep responses concise — spoken aloud. If listing tasks, summarize naturally.`
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   for (const action of content.actions || []) {
     switch (action.type) {

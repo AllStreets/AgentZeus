@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
 
@@ -53,7 +54,7 @@ When saving, extract the key information to store. When searching, summarize wha
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   for (const action of content.actions || []) {
     if (action.type === "save_note") {

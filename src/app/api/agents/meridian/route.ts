@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 import { getBaseUrl } from "@/lib/url";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
@@ -129,7 +130,7 @@ Respond with JSON:
     ],
   });
 
-  const content = JSON.parse(response.choices[0].message.content!);
+  const content = safeParseAgent(response.choices[0].message.content!);
 
   // Execute any AI-decided actions not already fired
   let shouldOpenApp = false;

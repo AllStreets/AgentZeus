@@ -73,7 +73,11 @@ Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or n
   });
 
   const content = response.choices[0].message.content!;
-  return JSON.parse(content);
+  try {
+    return JSON.parse(content);
+  } catch {
+    return { agent: "zeus" as AgentName, intent: "general" };
+  }
 }
 
 function logEvent(supabase: ReturnType<typeof createServiceClient>, sessionId: string, agentName: string, type: string, content: string) {
@@ -233,8 +237,13 @@ Respond with JSON: { "facts": ["fact1", "fact2"] } — empty array if nothing wo
     ],
   });
 
-  const parsed = JSON.parse(extraction.choices[0].message.content!);
-  const facts: string[] = parsed.facts || [];
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(extraction.choices[0].message.content!);
+  } catch {
+    return; // malformed JSON — skip memory extraction
+  }
+  const facts: string[] = (parsed.facts as string[]) || [];
 
   if (facts.length > 0) {
     const content = facts.map((f) => `- ${f}`).join("\n");

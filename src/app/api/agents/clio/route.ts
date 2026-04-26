@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { createServiceClient } from "@/lib/supabase";
+import { safeParseAgent } from "@/lib/safeJson";
 
 interface RunParams { intent: string; transcript: string; session_id: string }
 
@@ -49,7 +50,7 @@ Respond with JSON:
     ],
   });
 
-  const parsed = JSON.parse(response.choices[0].message.content!);
+  const parsed = safeParseAgent(response.choices[0].message.content!);
 
   // If Clio wants to save a note, do it
   if (parsed.action === "save" && parsed.note_content) {
