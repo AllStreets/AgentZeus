@@ -30,6 +30,9 @@ export interface ZeusResponse {
   response: string;
   session_id: string;
   agents_used?: string[];
+  open_app?: string;
+  bridge_actions?: Array<{ cmd: string; payload: Record<string, unknown> }>;
+  navigate_page?: string;
 }
 
 export interface Task {

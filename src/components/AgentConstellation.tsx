@@ -483,9 +483,9 @@ function ResponseStrip({ response, responseAgent, transcript, interimTranscript,
   return (
     <AnimatePresence>
       {text && (
-        <motion.div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 px-6"
+        <motion.div className="absolute bottom-0 left-0 right-0 flex items-start gap-3 px-6 py-2.5"
           style={{
-            height: 38,
+            maxHeight: 100,
             background: "rgba(6,11,24,0.88)",
             borderTop: "1px solid rgba(255,255,255,0.04)",
             backdropFilter: "blur(16px)",
@@ -498,28 +498,35 @@ function ResponseStrip({ response, responseAgent, transcript, interimTranscript,
           transition={{ duration: 0.25 }}
         >
           {showVoice ? (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
               <motion.div className="w-1.5 h-1.5 rounded-full bg-blue-400"
                 animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.7, repeat: Infinity }} />
               <span className="font-mono text-[8px] tracking-wider text-blue-400">YOU</span>
             </div>
           ) : responseAgent && !isProcessing ? (
-            <div className="flex items-center gap-1.5 shrink-0" style={{ color: responseAgent.color }}>
+            <div className="flex items-center gap-1.5 shrink-0 mt-0.5" style={{ color: responseAgent.color }}>
               <motion.div className="w-1.5 h-1.5 rounded-full"
                 style={{ background: responseAgent.color }}
                 animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} />
               <span className="font-mono text-[8px] tracking-wider">{responseAgent.displayName.toUpperCase()}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
               <motion.div className="w-1.5 h-1.5 rounded-full bg-zeus"
                 animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.6, repeat: Infinity }} />
               <span className="font-mono text-[8px] tracking-wider text-zeus">ZEUS</span>
             </div>
           )}
-          <div className="w-px h-3 shrink-0" style={{ background: "rgba(255,255,255,0.06)" }} />
-          <div className="flex-1 overflow-x-auto" style={{ WebkitOverflowScrolling: "touch" }}>
-            <p className="font-mono text-slate-300 whitespace-nowrap" style={{ fontSize: 9.5 }}>{text}</p>
+          <div className="w-px h-3 shrink-0 mt-0.5" style={{ background: "rgba(255,255,255,0.06)" }} />
+          <div
+            className="flex-1 min-w-0 overflow-y-auto"
+            style={{
+              maxHeight: 80,
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(255,255,255,0.15) transparent",
+            }}
+          >
+            <p className="font-mono text-slate-300 leading-relaxed" style={{ fontSize: 9.5 }}>{text}</p>
           </div>
         </motion.div>
       )}

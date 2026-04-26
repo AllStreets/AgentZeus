@@ -115,6 +115,8 @@ export default function MeridianPanel() {
       flash(transcript.slice(0, 48));
 
       const lower = transcript.toLowerCase();
+
+      // Update panel UI state to reflect voice-triggered actions
       const catMap: Record<string, string> = {
         geo: "geo", geopolit: "geo",
         mil: "military", military: "military", army: "military", war: "military",
@@ -124,6 +126,27 @@ export default function MeridianPanel() {
       };
       for (const [kw, cat] of Object.entries(catMap)) {
         if (lower.includes(kw)) { setActiveCat(cat); break; }
+      }
+
+      // Reflect overlay toggles in panel UI
+      const overlayMap: Record<string, string> = {
+        cities: "cities", city: "cities",
+        cables: "cables", cable: "cables",
+        flights: "flights", flight: "flights",
+        countries: "countries", country: "countries", borders: "countries",
+        threats: "threats", threat: "threats",
+        sanctions: "sanctions", sanction: "sanctions",
+        shipping: "shipping", vessels: "shipping", ships: "shipping",
+        earthquakes: "eq", quakes: "eq", eq: "eq",
+      };
+      for (const [kw, overlay] of Object.entries(overlayMap)) {
+        if (lower.includes(kw)) {
+          setActiveOverlays(prev => {
+            const next = new Set(prev);
+            next.has(overlay) ? next.delete(overlay) : next.add(overlay);
+            return next;
+          });
+        }
       }
     });
   }, []);

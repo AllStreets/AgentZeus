@@ -58,11 +58,13 @@ Also detect these special intents:
 - Daily briefing: "good morning" / "give me my briefing" / "morning briefing" / "daily briefing" → agent: "zeus", intent: "briefing"
 - Quick task add: "add task [title]" / "remind me to [task]" → agent: "artemis", intent: "quick_task:[title]"
 - Quick note: "remember [content]" / "note that [content]" → agent: "hera", intent: "quick_note:[content]"
-- Meridian globe: "open meridian" / "show the globe" / "geopolitical briefing" / "what's happening in the world" → agent: "meridian", intent: "navigate:meridian" or action
-- Chicago city: "open chicago" / "CTA status" / "what's on tonight in chicago" / "train times" / "chicago weather" → agent: "chicago", intent: "navigate:chicago" or action
-- Flexport sales: "open flexport" / "show my prospects" / "pipeline update" / "who should I call" / "hot leads" → agent: "flexport", intent: "navigate:flexport" or action
-- Poseidon web: "open poseidon" / "research this" / "look up" / "web search" / "fact check" → agent: "poseidon", intent: "navigate:poseidon" or action
-- Iris vision: "open iris" / "take screenshot" / "analyze screen" / "what am I looking at" / "OCR this" → agent: "iris", intent: "navigate:iris" or action
+- Meridian globe: ANY command mentioning meridian, globe, geopolitical, world news, toggle overlays, cables, cities, threats, analyst, briefing → agent: "meridian", intent: describe the action (NEVER use navigate:meridian — always route to the agent so it can process commands)
+- Chicago city: ANY command mentioning chicago, CTA, transit, weather in chicago, games, events, train times → agent: "chicago", intent: describe the action (NEVER use navigate:chicago)
+- Flexport sales: ANY command mentioning flexport, prospects, pipeline, vessels, hot leads, trade signals → agent: "flexport", intent: describe the action (NEVER use navigate:flexport)
+- Poseidon web: "research this" / "look up" / "web search" / "fact check" → agent: "poseidon", intent: describe the action
+- Iris vision: "take screenshot" / "analyze screen" / "what am I looking at" / "OCR this" → agent: "iris", intent: describe the action
+
+IMPORTANT: For meridian, chicago, and flexport — NEVER return navigate: intents. Always route to the agent so it can handle multi-step commands (e.g., "toggle cities and cables then open meridian" must go to the meridian agent, not be a navigate).
 
 Respond with JSON: { "agent": "<agent_name>", "intent": "<brief description or navigate:target>" }`,
       },
@@ -176,22 +178,37 @@ export async function POST(req: NextRequest) {
     if (agent === "hermes" && slack_webhook) extras.slack_webhook = slack_webhook;
     let response = await handleAgentRequest(agent, intent, transcript, sessionId, Object.keys(extras).length ? extras : undefined);
 
-    // Check if this is a multi-agent response (briefing, synthesis)
+    // Check if this is a structured agent response (multi-agent or agent with open_app)
     let agents_used: string[] | undefined;
+    let open_app: string | null = null;
+    let bridge_actions: Array<{ cmd: string; payload: Record<string, unknown> }> | undefined;
+    let navigate_page: string | undefined;
     try {
       const parsed = JSON.parse(response);
       if (parsed.__multi) {
         response = parsed.response;
         agents_used = parsed.agents_used;
       }
-    } catch { /* not multi-agent JSON, use as-is */ }
+      if (parsed.__agent_response) {
+        response = parsed.response;
+        open_app = parsed.open_app || null;
+        bridge_actions = parsed.bridge_actions;
+        navigate_page = parsed.navigate_page;
+      }
+    } catch { /* not structured JSON, use as-is */ }
 
     // Fire-and-forget — don't await these, they must not delay the response
     const supabase = createServiceClient();
     Promise.resolve(supabase.from("conversations").insert({ transcript, agent_name: agent, response })).catch(() => {});
     extractMemoryFacts(transcript, response, agent).catch(() => {});
 
-    return NextResponse.json({ agent, intent, response, session_id: sessionId, ...(agents_used ? { agents_used } : {}) });
+    return NextResponse.json({
+      agent, intent, response, session_id: sessionId,
+      ...(agents_used ? { agents_used } : {}),
+      ...(open_app ? { open_app } : {}),
+      ...(bridge_actions ? { bridge_actions } : {}),
+      ...(navigate_page ? { navigate_page } : {}),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Zeus POST error:", message);

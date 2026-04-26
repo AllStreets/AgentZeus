@@ -126,20 +126,32 @@ Respond with JSON:
   const content = JSON.parse(response.choices[0].message.content!);
 
   // Execute any AI-decided actions not already fired
+  let shouldOpenApp = false;
   for (const action of content.actions || []) {
     if (action.type === "globe_command" && !alreadyFiredCmds.has(action.cmd)) {
       await sendToMeridian(action.cmd, action.payload || {});
     }
     if (action.type === "open_app") {
-      await sendToMeridian("open_meridian", { url: MERIDIAN_URL });
+      shouldOpenApp = true;
     }
+  }
+
+  // Also detect open intent from the transcript directly
+  if (/\b(open|show|launch|pull up|go to)\b/i.test(transcript) && /\bmeridian\b|\bglobe\b|\bdashboard\b/i.test(transcript)) {
+    shouldOpenApp = true;
   }
 
   Promise.resolve(supabase.from("agent_events").insert({
     session_id, agent_name: "meridian", event_type: "complete", content: content.response,
   })).catch(() => {});
 
-  return content.response;
+  // Return JSON with open_app flag + bridge actions so frontend can re-fire after tab opens
+  return JSON.stringify({
+    __agent_response: true,
+    response: content.response,
+    open_app: shouldOpenApp ? MERIDIAN_URL : null,
+    bridge_actions: immediateActions.length > 0 ? immediateActions : undefined,
+  });
 }
 
 export async function POST(req: NextRequest) {

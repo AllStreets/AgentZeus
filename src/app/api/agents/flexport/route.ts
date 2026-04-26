@@ -20,6 +20,24 @@ async function fetchFlexport(path: string, method = "GET", body?: unknown) {
   } catch { return null; }
 }
 
+// Detect which page to navigate to from voice commands — mirrors panel PAGES keywords
+function detectPageFromTranscript(text: string): string | null {
+  const t = text.toLowerCase();
+  const PAGE_KEYWORDS: [string, string[]][] = [
+    ["flights",     ["flight","air","airfreight","airline","cargo plane","air cargo"]],
+    ["land",        ["land","truck","road","ground","drayage","ltl","ftl","inland"]],
+    ["vessels",     ["vessel","ship","ocean","freight","cargo","container","shipping","port"]],
+    ["market",      ["market map","territory","geographic","coverage","region map"]],
+    ["trade",       ["trade","import","export","trade map","trade flow","intelligence"]],
+    ["pilot",       ["outreach","agentic","who should i call","prospect","lead","contact"]],
+    ["performance", ["pipeline","deal","stage","kanban","close","opportunity","crm","sales","performance","quota","metrics","kpi"]],
+  ];
+  for (const [page, keywords] of PAGE_KEYWORDS) {
+    if (keywords.some((kw) => t.includes(kw))) return page;
+  }
+  return null;
+}
+
 export async function runFlexport({ intent, transcript, session_id }: RunParams): Promise<string> {
   const supabase = createServiceClient();
 
@@ -60,14 +78,19 @@ You have live access to prospect data, pipeline stages, trade signals, and vesse
 Live Flexport data:
 ${JSON.stringify(results, null, 2)}
 
+Available pages: home, flights (Air Freight), land (Land Freight), vessels (Ocean Freight), market (Market Map), trade (Trade Intelligence), pilot (Agentic Outreach), performance (Sales CRM)
+
 Respond with JSON:
 {
   "response": "<spoken sales intelligence — concise, actionable, SDR-focused>",
   "actions": [
     { "type": "open_app" },
-    { "type": "navigate", "page": "prospects"|"pipeline"|"vessels"|"signals"|"performance"|"trade" }
+    { "type": "navigate", "page": "<page_id>" }
   ]
 }
+
+Include { "type": "open_app" } ONLY if the user explicitly says "open", "show", "launch", or "pull up" Flexport.
+Include { "type": "navigate", "page": "<id>" } if the user wants a specific section opened.
 
 Speak like a sharp sales ops analyst. Lead with the most actionable insight — who to call, what deal to push, what signal to act on. Keep it under 5 sentences unless listing prospects.`,
       },
@@ -81,7 +104,25 @@ Speak like a sharp sales ops analyst. Lead with the most actionable insight — 
     session_id, agent_name: "flexport", event_type: "complete", content: content.response,
   })).catch(() => {});
 
-  return content.response;
+  // Detect page navigation from transcript keywords
+  const detectedPage = detectPageFromTranscript(transcript);
+
+  // Detect if user wants to open the dashboard
+  const shouldOpen = /\b(open|show|launch|pull up|go to)\b/i.test(transcript) && /\bflexport\b/i.test(transcript);
+
+  let openUrl: string | null = null;
+  if (shouldOpen || content.actions?.some((a: { type: string }) => a.type === "open_app")) {
+    const navPage = detectedPage
+      || content.actions?.find((a: { type: string; page?: string }) => a.type === "navigate")?.page;
+    openUrl = navPage ? `${FLEXPORT_URL}/${navPage}` : FLEXPORT_URL;
+  }
+
+  return JSON.stringify({
+    __agent_response: true,
+    response: content.response,
+    open_app: openUrl,
+    navigate_page: detectedPage,
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -55,15 +55,13 @@ export default function ChicagoPanel() {
   function openPage(page: string) {
     setActivePage(page);
     const url = page ? `${CHICAGO_URL}/${page}` : CHICAGO_URL;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, "zeus_app_chicago");
   }
 
   async function handleQuickAsk(query: string) {
     setLoading(true);
     setLastQuery(query);
     setResponse(null);
-    const detected = detectPage(query);
-    if (detected) openPage(detected);
     const result = await askZeus(query);
     setResponse(result);
     setLoading(false);
@@ -76,25 +74,26 @@ export default function ChicagoPanel() {
       setResponse(agentResponse);
       setLastQuery(transcript);
 
-      // Highlight the matching section in the panel (Dashboard already opened the URL)
+      // Highlight the matching section in the panel
       const page = detectPage(transcript) || detectPage(agentResponse);
-      if (page) setActivePage(page);
+      if (page) {
+        setActivePage(page);
+        setTimeout(() => setActivePage(null), 3000);
+      }
     });
   }, []);
 
   return (
     <div className="p-5 flex flex-col gap-5">
       {/* Open App */}
-      <a
-        href={CHICAGO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all"
+      <button
+        onClick={() => window.open(CHICAGO_URL, "zeus_app_chicago")}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all w-full"
         style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#3b82f6" }}
       >
         <ExternalLink size={11} />
         OPEN CHICAGO EXPLORER
-      </a>
+      </button>
 
       {/* Live response */}
       <AnimatePresence>

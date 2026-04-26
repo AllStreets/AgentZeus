@@ -49,15 +49,13 @@ export default function FlexportPanel() {
     setActivePage(page);
     setTimeout(() => setActivePage(null), 1500);
     const url = page ? `${FLEXPORT_URL}/${page}` : FLEXPORT_URL;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(url, "zeus_app_flexport");
   }
 
   async function handleQuickAsk(query: string) {
     setLoading(true);
     setLastQuery(query);
     setResponse(null);
-    const detected = detectPage(query);
-    if (detected) openPage(detected);
     const result = await askZeus(query);
     setResponse(result);
     setLoading(false);
@@ -70,25 +68,26 @@ export default function FlexportPanel() {
       setResponse(agentResponse);
       setLastQuery(transcript);
 
-      // Highlight the matching section in the panel (Dashboard already opened the URL)
+      // Highlight the matching section in the panel
       const page = detectPage(transcript) ?? detectPage(agentResponse);
-      if (page !== undefined) setActivePage(page);
+      if (page !== undefined) {
+        setActivePage(page);
+        setTimeout(() => setActivePage(null), 3000);
+      }
     });
   }, []);
 
   return (
     <div className="p-5 flex flex-col gap-5">
       {/* Open App */}
-      <a
-        href={FLEXPORT_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all"
+      <button
+        onClick={() => window.open(FLEXPORT_URL, "zeus_app_flexport")}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all w-full"
         style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}
       >
         <ExternalLink size={11} />
         OPEN FLEXPORT DASHBOARD
-      </a>
+      </button>
 
       {/* Live response */}
       <AnimatePresence>

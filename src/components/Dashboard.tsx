@@ -71,18 +71,11 @@ export default function Dashboard() {
 
   const handleOptimisticActions = useCallback((text: string) => {
     const t = text.toLowerCase();
-    if (/\bmeridian\b|\bglobe\b|\bgeopolit/.test(t)) {
-      setOpenPanel("meridian");
-      window.open("http://localhost:8765", "_blank");
-    } else if (/\bchicago\b|\bcta\b|\btransit\b|\bcubs\b|\bbulls\b|\bbears\b/.test(t)) {
-      setOpenPanel("chicago");
-      window.open("http://localhost:5173", "_blank");
-    } else if (/\bflexport\b|\bpipeline\b|\bprospects?\b|\bvessel\b|\bhot leads?\b/.test(t)) {
-      setOpenPanel("flexport");
-      window.open("http://localhost:5174", "_blank");
-    } else if (/\bhermes\b|\bemail\b|\bmail\b|\binbox\b|\bslack\b/.test(t)) {
+    // Open side panels for internal agents — external apps (meridian/chicago/flexport)
+    // are handled AFTER the agent processes the command via open_app in the response
+    if (/\bhermes\b|\bemail\b|\bmail\b|\binbox\b|\bslack\b/.test(t)) {
       setOpenPanel("hermes");
-    } else if (/\bathena\b|\bgithub\b|\bcode\b|\bpull request\b|\bpr\b/.test(t)) {
+    } else if (/\bathena\b|\bgithub\b|\bpull request\b|\bpr\b/.test(t)) {
       setOpenPanel("athena");
     } else if (/\bapollo\b|\bcalendar\b|\bschedule\b|\bmeeting\b/.test(t)) {
       setOpenPanel("apollo");
@@ -94,7 +87,7 @@ export default function Dashboard() {
       setOpenPanel("clio");
     } else if (/\bhera\b|\bnotes?\b|\bmemory\b|\bremember\b/.test(t)) {
       setOpenPanel("hera");
-    } else if (/\bposeidon\b|\bresearch\b|\bweb search\b|\blook up\b|\bfact.?check\b/.test(t)) {
+    } else if (/\bposeidon\b|\bweb search\b|\blook up\b|\bfact.?check\b/.test(t)) {
       setOpenPanel("poseidon");
     } else if (/\biris\b|\bscreenshot\b|\bscreen\b|\bvision\b|\banalyze.*image\b|\bocr\b/.test(t)) {
       setOpenPanel("iris");
@@ -112,6 +105,24 @@ export default function Dashboard() {
           const target = response.intent.replace("navigate:", "");
           if (target === "settings") setSettingsOpen(true);
           else setOpenPanel(target as AgentName);
+        }
+        // Open external app tab if the agent requested it (reuses same tab per app)
+        if (response.open_app) {
+          window.open(response.open_app, `zeus_app_${response.agent}`);
+          setOpenPanel(response.agent as AgentName);
+          // Re-fire bridge commands after tab has time to load (fixes timing for multi-step Meridian commands)
+          if (response.bridge_actions?.length) {
+            const actions = response.bridge_actions;
+            setTimeout(() => {
+              for (const action of actions) {
+                fetch("/api/meridian-bridge", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ cmd: action.cmd, payload: action.payload }),
+                }).catch(() => {});
+              }
+            }, 1200);
+          }
         }
         // Track active agents (illuminated lines) — support multi-agent synthesis
         if (response.agents_used?.length) {
@@ -141,6 +152,11 @@ export default function Dashboard() {
 
   const { isListening, transcript, interimTranscript, toggleListening, isSupported } =
     useVoiceInput(handleTranscript);
+
+  // Clear illuminated lines when listening starts
+  useEffect(() => {
+    if (isListening) setActiveAgents([]);
+  }, [isListening]);
 
   useEffect(() => {
     if (events.length > 0) {
