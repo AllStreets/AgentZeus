@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { audioLevel } from "@/lib/audioLevel";
+import { audioLevel, zeusBusy } from "@/lib/audioLevel";
 
 interface UseVoiceInputReturn {
   isListening: boolean;
@@ -113,6 +113,8 @@ export function useVoiceInput(onFinalTranscript?: (text: string) => void): UseVo
 
     function tick() {
       if (!audioCtx || audioCtx.state !== "running" || !analyserNode) return;
+      // Suppress clap detection while Zeus is speaking or processing
+      if (zeusBusy.current) { audioLevel.current = 0; return; }
 
       const buf = new Float32Array(analyserNode.fftSize);
       analyserNode.getFloatTimeDomainData(buf);

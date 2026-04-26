@@ -30,6 +30,7 @@ import { useAmbientMonitor } from "@/hooks/useAmbientMonitor";
 import { agents, getAgent } from "@/lib/agents";
 import { agentBus } from "@/lib/agentBus";
 import { AgentEvent, AgentName } from "@/types";
+import { zeusBusy } from "@/lib/audioLevel";
 
 interface ConversationEntry {
   transcript: string;
@@ -157,6 +158,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (isListening) setActiveAgents([]);
   }, [isListening]);
+
+  // Suppress clap detector and auto-listen while Zeus is speaking or processing
+  useEffect(() => {
+    zeusBusy.current = isSpeaking || isProcessing;
+  }, [isSpeaking, isProcessing]);
 
   useEffect(() => {
     if (events.length > 0) {
