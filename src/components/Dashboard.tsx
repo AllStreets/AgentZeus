@@ -111,19 +111,6 @@ export default function Dashboard() {
         if (response.open_app) {
           window.open(response.open_app, `zeus_app_${response.agent}`, "width=1280,height=900,menubar=no,toolbar=no");
           setOpenPanel(response.agent as AgentName);
-          // Re-fire bridge commands after tab has time to load (fixes timing for multi-step Meridian commands)
-          if (response.bridge_actions?.length) {
-            const actions = response.bridge_actions;
-            setTimeout(() => {
-              for (const action of actions) {
-                fetch("/api/meridian-bridge", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ cmd: action.cmd, payload: action.payload }),
-                }).catch(() => {});
-              }
-            }, 1500);
-          }
         }
         // Track active agents (illuminated lines) — support multi-agent synthesis
         if (response.agents_used?.length) {
