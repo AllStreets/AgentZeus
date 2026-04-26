@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// In-memory command queue — simple ring buffer, no DB needed
-// MERIDIAN polls GET, Meridian agent writes via POST
+// In-memory command queue — stores multiple commands so multi-step voice commands work
+// Meridian dashboard polls GET repeatedly, consuming one command per poll
 interface MeridianCommand {
   cmd: string;
   payload?: Record<string, unknown>;
   ts: number;
 }
 
-let _latest: MeridianCommand | null = null;
-let _lastConsumed = 0;
+const _queue: MeridianCommand[] = [];
 
 export async function GET() {
-  // Return command only if it's new (not yet consumed)
-  if (_latest && _latest.ts > _lastConsumed) {
-    _lastConsumed = _latest.ts;
-    return NextResponse.json({ command: _latest }, {
+  // Pop the oldest pending command — one per poll cycle
+  if (_queue.length > 0) {
+    const command = _queue.shift()!;
+    return NextResponse.json({ command }, {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -29,7 +28,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  _latest = { cmd: body.cmd, payload: body.payload || {}, ts: Date.now() };
+  _queue.push({ cmd: body.cmd, payload: body.payload || {}, ts: Date.now() });
+  // Trim to prevent unbounded growth if Meridian isn't polling
+  while (_queue.length > 50) _queue.shift();
   return NextResponse.json({ ok: true });
 }
 

@@ -121,7 +121,7 @@ export default function Dashboard() {
                   body: JSON.stringify({ cmd: action.cmd, payload: action.payload }),
                 }).catch(() => {});
               }
-            }, 1200);
+            }, 1500);
           }
         }
         // Track active agents (illuminated lines) — support multi-agent synthesis

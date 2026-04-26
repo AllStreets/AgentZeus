@@ -78,9 +78,15 @@ export async function runMeridian({ intent, transcript, session_id }: RunParams)
   // ── IMMEDIATE: fire detected actions + fetch context in parallel ──────
   const immediateActions = detectImmediateActions(transcript);
 
+  // Fire all detected bridge commands sequentially (queue preserves order)
+  const fireActions = async () => {
+    for (const { cmd, payload } of immediateActions) {
+      await sendToMeridian(cmd, payload);
+    }
+  };
+
   const [, storiesResult] = await Promise.all([
-    // Fire all detected bridge commands NOW — before OpenAI responds
-    Promise.all(immediateActions.map(({ cmd, payload }) => sendToMeridian(cmd, payload))),
+    fireActions(),
     // Fetch stories for the AI briefing context
     supabase.from("stories")
       .select("title, summary, cat, region, src, time")
