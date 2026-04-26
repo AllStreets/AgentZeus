@@ -108,7 +108,7 @@ export default function Dashboard() {
         }
         // Open external app tab if the agent requested it (reuses same tab per app)
         if (response.open_app) {
-          window.open(response.open_app, `zeus_app_${response.agent}`);
+          window.open(response.open_app, `zeus_app_${response.agent}`, "width=1280,height=900,menubar=no,toolbar=no");
           setOpenPanel(response.agent as AgentName);
           // Re-fire bridge commands after tab has time to load (fixes timing for multi-step Meridian commands)
           if (response.bridge_actions?.length) {

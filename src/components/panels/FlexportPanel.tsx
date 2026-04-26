@@ -49,7 +49,7 @@ export default function FlexportPanel() {
     setActivePage(page);
     setTimeout(() => setActivePage(null), 1500);
     const url = page ? `${FLEXPORT_URL}/${page}` : FLEXPORT_URL;
-    window.open(url, "zeus_app_flexport");
+    window.open(url, "zeus_app_flexport", "width=1280,height=900,menubar=no,toolbar=no");
   }
 
   async function handleQuickAsk(query: string) {
@@ -81,7 +81,7 @@ export default function FlexportPanel() {
     <div className="p-5 flex flex-col gap-5">
       {/* Open App */}
       <button
-        onClick={() => window.open(FLEXPORT_URL, "zeus_app_flexport")}
+        onClick={() => window.open(FLEXPORT_URL, "zeus_app_flexport", "width=1280,height=900,menubar=no,toolbar=no")}
         className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all w-full"
         style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b" }}
       >

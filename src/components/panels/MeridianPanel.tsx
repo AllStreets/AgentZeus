@@ -154,16 +154,14 @@ export default function MeridianPanel() {
   return (
     <div className="p-5 flex flex-col gap-5">
       {/* Open App */}
-      <a
-        href={MERIDIAN_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all"
+      <button
+        onClick={() => window.open(MERIDIAN_URL, "zeus_app_meridian", "width=1280,height=900,menubar=no,toolbar=no")}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all w-full"
         style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)", color: "#00d4ff" }}
       >
         <ExternalLink size={11} />
         OPEN MERIDIAN DASHBOARD
-      </a>
+      </button>
 
       {/* Status */}
       <AnimatePresence>

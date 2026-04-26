@@ -55,7 +55,7 @@ export default function ChicagoPanel() {
   function openPage(page: string) {
     setActivePage(page);
     const url = page ? `${CHICAGO_URL}/${page}` : CHICAGO_URL;
-    window.open(url, "zeus_app_chicago");
+    window.open(url, "zeus_app_chicago", "width=1280,height=900,menubar=no,toolbar=no");
   }
 
   async function handleQuickAsk(query: string) {
@@ -87,7 +87,7 @@ export default function ChicagoPanel() {
     <div className="p-5 flex flex-col gap-5">
       {/* Open App */}
       <button
-        onClick={() => window.open(CHICAGO_URL, "zeus_app_chicago")}
+        onClick={() => window.open(CHICAGO_URL, "zeus_app_chicago", "width=1280,height=900,menubar=no,toolbar=no")}
         className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all w-full"
         style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)", color: "#3b82f6" }}
       >
